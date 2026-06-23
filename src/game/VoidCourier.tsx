@@ -1083,34 +1083,36 @@ export default function VoidCourier() {
         <canvas
           ref={canvasRef}
           onClick={handleCanvasClick}
-          className="block cursor-pointer"
+          className="block cursor-pointer relative z-10"
           style={{ imageRendering: "pixelated" }}
         />
-        <div className="crt-overlay" />
-        <div className="crt-vignette" />
+        {/* Added pointer-events-none to prevent these overlays from hijacking your clicks */}
+        <div className="crt-overlay pointer-events-none z-20" />
+        <div className="crt-vignette pointer-events-none z-20" />
       </div>
 
       {showSign && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 px-4 py-4 overflow-auto">
-          <div className="max-w-md border-4 border-[#8a5a2a] bg-[#f0d8a0] p-5 text-[10px] leading-relaxed text-[#2a1a08] shadow-[8px_8px_0_#0a0612]">
-            <div className="mb-3 text-center text-[14px] text-[#5a2818]">— NOTICE TO COURIER —</div>
-            <p className="mb-2 text-[#5a2818]">YOU HAVE FALLEN INTO <b>THE VOID</b>.</p>
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 px-4 py-4 overflow-auto backdrop-blur-xs">
+          {/* Re-themed this panel container from parchment yellow to deep neon space coordinates */}
+          <div className="max-w-md border-4 border-[#5028a0] bg-[#0a0820] p-5 text-[10px] leading-relaxed text-[#fff4ff] shadow-[8px_8px_0_#241848]">
+            <div className="mb-3 text-center text-[14px] font-bold text-[#a8ff80]">— NOTICE TO COURIER —</div>
+            <p className="mb-2 text-[#ff80a0]">YOU HAVE FALLEN INTO <b>THE VOID</b>.</p>
             <p className="mb-2">
               Gather lost parcels and carry them to the house at the edge of each stage —
               every delivery walks you closer along the road back to <b>EARTH</b>.
             </p>
-            <p className="mb-2"><b>QUOTA:</b> deliver at least <b>70%</b> of mail or redo the stage.</p>
+            <p className="mb-2"><b>QUOTA:</b> deliver at least <span className="text-[#ffe040]">70%</span> of mail or redo the stage.</p>
             <p className="mb-2"><b>BETWEEN STAGES:</b> postal mini-game grants a random powerup.</p>
-            <p className="mb-2"><b>10 STAGES</b> stand between you and Earth.</p>
-            <p className="mb-2">
-              MOVE <b>ARROWS / A D</b> &nbsp; JUMP <b>SPACE / W</b> &nbsp; RETRY <b>R</b>
+            <p className="mb-2"><span className="text-[#80d8ff]">10 STAGES</span> stand between you and Earth.</p>
+            <p className="mb-4 bg-[#03020a] p-2 rounded border border-[#241848] text-center text-[#ffd040]">
+              MOVE: <b>ARROWS / A D</b> &nbsp;|&nbsp; JUMP: <b>SPACE / W</b> &nbsp;|&nbsp; RETRY: <b>R</b>
             </p>
             <div className="flex justify-center mt-3">
               <button
                 onClick={startGame}
-                className="border-2 border-[#2a1a08] bg-[#5a2818] px-4 py-2 text-[10px] text-[#f8f0d8] shadow-[3px_3px_0_#2a1a08] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#2a1a08]"
+                className="border-2 border-[#a8ff80] bg-[#241848] px-6 py-2 text-[11px] font-bold text-[#a8ff80] shadow-[3px_3px_0_#5028a0] transition-all cursor-pointer active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
               >
-                BEGIN
+                BEGIN DELIVERY
               </button>
             </div>
           </div>
