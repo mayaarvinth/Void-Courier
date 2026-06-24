@@ -321,12 +321,14 @@ export default function VoidCourier() {
   const [endlessBest, setEndlessBest] = useState(0);
   const [lastReward, setLastReward] = useState<Powerup | null>(null);
 
+  // ─── Audio refs ───────────────────────────────────────────────────────────
   const bgmRef = useRef<HTMLAudioElement | null>(null);
   const cozyRef2 = useRef<HTMLAudioElement | null>(null);
   const jumpAudioRef = useRef<HTMLAudioElement | null>(null);
   const deathAudioRef = useRef<HTMLAudioElement | null>(null);
   const levelUpAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Initialise audio elements once
   useEffect(() => {
     const bgm = new Audio(bgmSrc);
     bgm.loop = true;
@@ -371,6 +373,7 @@ export default function VoidCourier() {
     levelUpAudioRef.current.play().catch(() => {});
   }, []);
 
+  // Switch between BGM / cozy music based on scene
   useEffect(() => {
     const isCozy = scene === "earthCozy" || scene === "earthCozyDone";
     if (isCozy) {
@@ -385,12 +388,12 @@ export default function VoidCourier() {
       }
     }
   }, [scene]);
-  
+  // ─────────────────────────────────────────────────────────────────────────
 
   const STORY_SLIDES = [
-    { title: "THE VOID", lines: ["Before time was tidy, things could slip.", "A forgotten name. A letter never sent.", "A future nobody chose.", "They all fell — through the cracks", "between what was and what remained.", "They fell into THE VOID."] },
-    { title: "THE VOID IS FULL", lines: ["The Void was never meant to be a place.", "But places grow wherever enough things", "are lost together.", "Civilizations. Clocks. Carousel horses.", "And mail. So much undelivered mail.", "It piles up. It drifts. It waits."] },
-    { title: "YOU", lines: ["You are Elias Ward, courier.", "You slipped — between one delivery", "and the next — and now you're here.", "The Curator found you.", '"Deliver the lost mail," it said.', '"Every parcel is a step back home."'] },
+    { title: "On a normal Tuesday...", lines: ["Elijah Ward was just a normal mailman, exiting his bus to turn in the mails", "An eerie feeling washed over him as he stepped on the doorstep of the house", '"Is anyone there?"'] },
+    { title: "THE VOID...", lines: ["A rumble shook beneath him", "As he wobbled to grasp the door", "the floor beneath him fell apart.", '"HELP, SOMEBODY HELP--"', "Before he could finish, he fell into the strange looking tunnel"] },
+    { title: "YOUR MISSION", lines: ['"Who is there!" he yelled, only to hear his echo', "As Elijah Ward, your duty is to return him back to Earth"] },
   ];
 
   const INTRO_SLIDES = ["LONG AGO, EARTH'S MAIL SHIP TORE OPEN OVER THE VOID...", "EVERY LETTER, EVERY PARCEL, EVERY LOST KEEPSAKE SPILLED INTO THE DARK.", "YOU ARE THE LAST COURIER LEFT STANDING.", "GATHER WHAT THE VOID STOLE.  CARRY IT HOME."];
@@ -611,6 +614,7 @@ export default function VoidCourier() {
         const maxCam = lvl[0].length * TS - VW;
         if (cameraRef.current > maxCam) cameraRef.current = maxCam;
 
+        // Vertical camera: keep player centered on Y axis
         const targetCamY = p.y - VH / 2;
         cameraYRef.current += (targetCamY - cameraYRef.current) * 0.12;
         if (cameraYRef.current < 0) cameraYRef.current = 0;
@@ -864,14 +868,14 @@ export default function VoidCourier() {
 
     if (s === "levelComplete") {
       ctx.fillStyle = "rgba(10,6,18,0.92)"; ctx.fillRect(0, 0, VW, VH);
-      
+      // Pixelated box
       ctx.fillStyle = C.crt; ctx.fillRect(VW/2 - 72, VH/2 - 48, 144, 96);
       ctx.fillStyle = "#000";  ctx.fillRect(VW/2 - 72, VH/2 - 48, 144, 4);
       ctx.fillStyle = "#000";  ctx.fillRect(VW/2 - 72, VH/2 + 44, 144, 4);
       ctx.fillStyle = "#000";  ctx.fillRect(VW/2 - 72, VH/2 - 48, 4, 96);
       ctx.fillStyle = "#000";  ctx.fillRect(VW/2 + 68, VH/2 - 48, 4, 96);
       ctx.fillStyle = "#0a0820"; ctx.fillRect(VW/2 - 68, VH/2 - 44, 136, 88);
-      
+      // Corner pixels
       ctx.fillStyle = C.crt;
       ctx.fillRect(VW/2 - 68, VH/2 - 44, 8, 4); ctx.fillRect(VW/2 + 60, VH/2 - 44, 8, 4);
       ctx.fillRect(VW/2 - 68, VH/2 + 40, 8, 4); ctx.fillRect(VW/2 + 60, VH/2 + 40, 8, 4);
@@ -1321,6 +1325,44 @@ function TypewriterLine({ text, speed = 26, onDone }: { text: string; speed?: nu
   return <>{text.slice(0, shown)}{shown < text.length && <span style={{ opacity: 0.7 }}>▌</span>}</>;
 }
 
+function PixelBorder({ color, bg, children, shadow = true }: { color: string; bg: string; children: React.ReactNode; shadow?: boolean }) {
+  // Pure CSS pixel-art border: 8px solid outline + 4px inset step in corners
+  return (
+    <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
+      {shadow && <div style={{ position: "absolute", top: "8px", left: "8px", right: "-8px", bottom: "-8px", background: "#000", zIndex: 0 }} />}
+      <div style={{
+        position: "relative", zIndex: 1,
+        background: bg,
+        border: `8px solid ${color}`,
+        boxShadow: `inset 0 0 0 4px #000, inset 0 0 0 6px ${color}`,
+        imageRendering: "pixelated",
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function PixelBtn({ label, onClick, color, bg, fontSize = "11px" }: { label: string; onClick: () => void; color: string; bg: string; fontSize?: string | number }) {
+  return (
+    <button onClick={onClick} style={{
+      display: "block", width: "100%", padding: "12px 0",
+      fontFamily: '"Press Start 2P", monospace', fontSize: fontSize, letterSpacing: "0.1em",
+      color, background: bg,
+      border: `6px solid #000`,
+      boxShadow: `6px 6px 0 #000`,
+      transform: "translate(-3px,-3px)",
+      cursor: "pointer", imageRendering: "pixelated",
+      outline: `3px solid ${color}`,
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.3)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.filter = ""; }}
+      onMouseDown={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(3px,3px)"; b.style.boxShadow = "none"; }}
+      onMouseUp={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(-3px,-3px)"; b.style.boxShadow = `6px 6px 0 #000`; }}
+    >{label}</button>
+  );
+}
+
 function IntroOverlay({ phase, setPhase, storySlides, onStart, npcColors }: {
   phase: number; setPhase: (n: number) => void;
   storySlides: SlideData[]; onStart: () => void;
@@ -1339,180 +1381,186 @@ function IntroOverlay({ phase, setPhase, storySlides, onStart, npcColors }: {
     else if (phase === 3) setPhase(4);
     else onStart();
   };
-  
-  const CREAM   = "#f5e8cc";
-  const PARCH   = "#e8d4a8";
-  const BROWN   = "#5a3010";
-  const DARKBRN = "#2e1808";
-  const LTBRN   = "#8a5a28";
 
-  
-  const rule = () => (
-    <div style={{ height: "3px", background: `repeating-linear-gradient(90deg, ${BROWN} 0px, ${BROWN} 6px, ${PARCH} 6px, ${PARCH} 8px)`, margin: "10px 0" }} />
-  );
+  // Palettes
+  const PARCH   = "#f0ddb0";
+  const BOARD   = "#d4b87a";
+  const BROWN   = "#6b3a12";
+  const DKBRN   = "#2e1506";
+  const GOLD    = "#c8a030";
+  const DGOLD   = "#7a5a10";
+  const BGDARK  = "#0a0604";
 
-  
-  const btn = (label: string, onClick: () => void) => (
-    <button onClick={onClick} style={{
-      display: "block", width: "100%", padding: "10px 0",
-      fontFamily: '"Press Start 2P", monospace', fontSize: "8px", letterSpacing: "0.08em",
-      color: CREAM, background: BROWN, border: `3px solid ${DARKBRN}`,
-      cursor: "pointer", boxShadow: `4px 4px 0 ${DARKBRN}`, transform: "translate(-2px,-2px)",
-      imageRendering: "pixelated",
-    }}
-      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = LTBRN; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = BROWN; }}
-      onMouseDown={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(2px,2px)"; b.style.boxShadow = "none"; }}
-      onMouseUp={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(-2px,-2px)"; b.style.boxShadow = `4px 4px 0 ${DARKBRN}`; }}
-    >{label}</button>
-  );
-
-  
+  // ── STORY SLIDES ─────────────────────────────────────────────────────────
   if (isStory && slide) {
     return (
-      <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,5,2,0.92)", fontFamily: '"Press Start 2P", monospace' }}
-        onClick={advance}>
-        {/* scanlines */}
-        <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px)" }} />
+      <div
+        style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(8,4,2,0.95)", fontFamily: '"Press Start 2P", monospace', cursor: "pointer" }}
+        onClick={advance}
+      >
+        {/* CRT scanlines */}
+        <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.25) 2px, rgba(0,0,0,0.25) 4px)", zIndex: 10 }} />
 
-        <div style={{ position: "relative", width: "100%", maxWidth: "480px", margin: "0 20px" }} onClick={e => e.stopPropagation()}>
-          {/* drop shadow */}
-          <div style={{ position: "absolute", top: "8px", left: "8px", right: "-8px", bottom: "-8px", background: DARKBRN }} />
-          {/* board body */}
-          <div style={{ position: "relative", background: PARCH, border: `5px solid ${BROWN}`, outline: `2px solid ${DARKBRN}` }}>
-            {/* top pin row */}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 14px 0" }}>
-              {[0,1,2,3,4].map(i => <div key={i} style={{ width: "6px", height: "6px", borderRadius: "50%", background: BROWN, border: `2px solid ${DARKBRN}`, boxShadow: "1px 1px 0 #000" }} />)}
+        <div style={{ position: "relative", width: "min(700px, 92vw)" }} onClick={e => e.stopPropagation()}>
+          <PixelBorder color={BROWN} bg={BOARD}>
+            {/* Board texture stripes */}
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 7px, rgba(0,0,0,0.07) 7px, rgba(0,0,0,0.07) 8px)`, pointerEvents: "none" }} />
+
+            {/* Pin row top */}
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 20px 0", position: "relative", zIndex: 1 }}>
+              {[0,1,2,3,4,5,6].map(i => (
+                <div key={i} style={{ width: "12px", height: "12px", background: DKBRN, border: `3px solid #000`, boxShadow: "2px 2px 0 #000" }} />
+              ))}
             </div>
 
-            <div style={{ padding: "8px 20px 16px" }}>
-              {/* header: — TRANSMISSION N / 3 — */}
-              <div style={{ textAlign: "center", fontSize: "7px", color: LTBRN, letterSpacing: "0.15em", marginBottom: "6px" }}>
-                — TRANSMISSION {phase} / 3 —
+            <div style={{ padding: "10px 32px 24px", position: "relative", zIndex: 1 }}>
+              {/* header 1-3*/}
+              <div style={{ textAlign: "center", fontSize: "11px", color: DKBRN, letterSpacing: "0.2em", marginBottom: "10px", opacity: 0.8 }}>
+                — {phase} / 3 —
               </div>
-              {rule()}
-              {/* title */}
-              <div style={{ fontSize: "11px", fontWeight: "bold", color: BROWN, letterSpacing: "0.08em", textAlign: "center", marginBottom: "12px", textShadow: `1px 1px 0 ${DARKBRN}` }}>
+
+              {/* Thick dashed divider */}
+              <div style={{ height: "6px", background: `repeating-linear-gradient(90deg, ${BROWN} 0, ${BROWN} 10px, ${BOARD} 10px, ${BOARD} 14px)`, margin: "0 0 16px", border: `2px solid ${DKBRN}` }} />
+
+              {/* Slide title */}
+              <div style={{ fontSize: "20px", fontWeight: "bold", color: BROWN, textAlign: "center", marginBottom: "20px", lineHeight: 1.4, textShadow: `3px 3px 0 ${DKBRN}`, letterSpacing: "0.06em" }}>
                 {slide.title}
               </div>
 
-              {/* body text */}
-              <div style={{ minHeight: "120px", fontSize: "7px", color: DARKBRN, lineHeight: "2.4", letterSpacing: "0.06em" }}>
-                {slide.lines.slice(0, lineIdx).map((l, i) => (
-                  <div key={i} style={{ marginBottom: "3px" }}>{l}</div>
-                ))}
-                {lineIdx < slide.lines.length && (
-                  <div>
-                    <TypewriterLine
-                      text={slide.lines[lineIdx]}
-                      onDone={() => {
-                        if (lineIdx + 1 < slide.lines.length) setTimeout(() => setLineIdx(i => i + 1), 350);
-                        else setTimeout(() => setAllDone(true), 400);
-                      }}
-                    />
-                  </div>
-                )}
+              {/* Body text on inner parchment panel */}
+              <div style={{ background: PARCH, border: `6px solid ${DKBRN}`, boxShadow: `inset 0 0 0 3px ${BROWN}`, padding: "20px 24px", minHeight: "180px", marginBottom: "16px" }}>
+                <div style={{ fontSize: "18px", color: DKBRN, lineHeight: "2.6", letterSpacing: "0.05em" }}>
+                  {slide.lines.slice(0, lineIdx).map((l, i) => (
+                    <div key={i} style={{ marginBottom: "4px" }}>{l}</div>
+                  ))}
+                  {lineIdx < slide.lines.length && (
+                    <div>
+                      <TypewriterLine
+                        text={slide.lines[lineIdx]}
+                        onDone={() => {
+                          if (lineIdx + 1 < slide.lines.length) setTimeout(() => setLineIdx(idx => idx + 1), 350);
+                          else setTimeout(() => setAllDone(true), 400);
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {rule()}
+              {/* Thick dashed divider */}
+              <div style={{ height: "6px", background: `repeating-linear-gradient(90deg, ${BROWN} 0, ${BROWN} 10px, ${BOARD} 10px, ${BOARD} 14px)`, margin: "0 0 16px", border: `2px solid ${DKBRN}` }} />
 
-              {/* footer: dots + button */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px" }}>
-                <div style={{ display: "flex", gap: "6px" }}>
+              {/* Footer row */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                {/* Progress squares */}
+                <div style={{ display: "flex", gap: "10px" }}>
                   {[1,2,3].map(i => (
-                    <div key={i} style={{ width: "8px", height: "8px", background: i === phase ? BROWN : PARCH, border: `2px solid ${BROWN}` }} />
+                    <div key={i} style={{ width: "16px", height: "16px", background: i === phase ? BROWN : "transparent", border: `4px solid ${BROWN}`, boxShadow: i === phase ? `2px 2px 0 ${DKBRN}` : "none" }} />
                   ))}
                 </div>
-                <div style={{ width: "180px" }}>
-                  {btn(allDone ? (phase < 3 ? "NEXT >" : "CONTINUE >") : "SKIP >>", advance)}
-                </div>
+                <PixelBtn
+                  label={allDone ? (phase < 3 ? "NEXT  >" : "CONTINUE  >") : "SKIP  >>"}
+                  onClick={advance}
+                  color={PARCH}
+                  bg={BROWN}
+                />
               </div>
             </div>
 
-            {/* bottom pin row */}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 14px 6px" }}>
-              {[0,1,2,3,4].map(i => <div key={i} style={{ width: "6px", height: "6px", borderRadius: "50%", background: BROWN, border: `2px solid ${DARKBRN}`, boxShadow: "1px 1px 0 #000" }} />)}
+            {/* Pin row bottom */}
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 20px 10px", position: "relative", zIndex: 1 }}>
+              {[0,1,2,3,4,5,6].map(i => (
+                <div key={i} style={{ width: "12px", height: "12px", background: DKBRN, border: `3px solid #000`, boxShadow: "2px 2px 0 #000" }} />
+              ))}
             </div>
-          </div>
+          </PixelBorder>
         </div>
 
-        {/* click anywhere hint */}
-        <div style={{ position: "absolute", bottom: "20px", left: "50%", transform: "translateX(-50%)", fontSize: "6px", color: LTBRN, fontFamily: '"Press Start 2P", monospace', letterSpacing: "0.1em", opacity: 0.7 }}>
-          click / space to continue
+        {/* hint */}
+        <div style={{ position: "absolute", bottom: "16px", left: "50%", transform: "translateX(-50%)", fontSize: "8px", color: BROWN, fontFamily: '"Press Start 2P", monospace', opacity: 0.7, letterSpacing: "0.1em" }}>
+          CLICK / SPACE TO CONTINUE
         </div>
       </div>
     );
   }
 
-  
-  const GOLD = "#c8a030";
-  const DGOLD = "#7a5a10";
-
+  // ── CURATOR BRIEFING — full-width RPG speech bubble ──────────────────────
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "20px", background: "rgba(10,5,2,0.88)", fontFamily: '"Press Start 2P", monospace' }}>
-      {/* scanlines */}
-      <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px)" }} />
+    <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", background: "rgba(8,4,2,0.85)", fontFamily: '"Press Start 2P", monospace' }}>
+      {/* CRT scanlines */}
+      <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px)", zIndex: 10 }} />
 
-      {/* NPC sprite — left of bubble */}
-      <div style={{ position: "absolute", bottom: "28px", left: "calc(50% - 260px)", zIndex: 2, width: "48px" }}>
-        <div style={{ position: "relative", width: "36px", margin: "0 auto" }}>
-          <div style={{ position: "absolute", top: "-18px", left: "4px", width: "28px", height: "20px", background: npcColors.cloak, border: "2px solid #000" }} />
-          <div style={{ position: "absolute", top: "-11px", left: "9px", width: "18px", height: "11px", background: "#e8c89a", border: "2px solid #000" }} />
-          <div style={{ position: "absolute", top: "-8px", left: "12px", width: "3px", height: "3px", background: "#000" }} />
-          <div style={{ position: "absolute", top: "-8px", left: "22px", width: "3px", height: "3px", background: "#000" }} />
-          <div style={{ position: "absolute", top: "-2px", left: "9px", width: "18px", height: "6px", background: npcColors.beard }} />
-          <div style={{ width: "36px", height: "42px", background: npcColors.cloak, border: "2px solid #000" }} />
-          <div style={{ position: "absolute", top: "-22px", right: "-6px", width: "4px", height: "64px", background: "#6a4010", border: "2px solid #000" }} />
-          <div style={{ position: "absolute", top: "-24px", right: "-9px", width: "10px", height: "5px", background: npcColors.mail, border: "2px solid #000" }} />
+      {/* Full-width speech box at bottom */}
+      <div style={{ position: "relative", width: "100%", zIndex: 5 }}>
+
+        {/* NPC portrait — sits above box on the left */}
+        <div style={{ position: "absolute", bottom: "100%", left: "32px", marginBottom: "0px", zIndex: 6 }}>
+          {/* Portrait frame */}
+          <div style={{ background: PARCH, border: `8px solid ${DKBRN}`, boxShadow: `inset 0 0 0 3px #000, 6px 6px 0 #000`, width: "88px", height: "96px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+            {/* NPC pixel art — scaled up */}
+            <div style={{ position: "relative", width: "52px", height: "68px" }}>
+              <div style={{ position: "absolute", top: "0px", left: "6px", width: "40px", height: "28px", background: npcColors.cloak, border: "3px solid #000" }} />
+              <div style={{ position: "absolute", top: "6px", left: "14px", width: "26px", height: "16px", background: "#e8c89a", border: "3px solid #000" }} />
+              <div style={{ position: "absolute", top: "10px", left: "18px", width: "4px", height: "4px", background: "#000" }} />
+              <div style={{ position: "absolute", top: "10px", left: "30px", width: "4px", height: "4px", background: "#000" }} />
+              <div style={{ position: "absolute", top: "18px", left: "14px", width: "26px", height: "8px", background: npcColors.beard }} />
+              <div style={{ position: "absolute", top: "28px", left: "2px", width: "48px", height: "40px", background: npcColors.cloak, border: "3px solid #000" }} />
+              <div style={{ position: "absolute", top: "-4px", right: "-4px", width: "6px", height: "84px", background: "#6a4010", border: "3px solid #000" }} />
+              <div style={{ position: "absolute", top: "-8px", right: "-10px", width: "14px", height: "8px", background: npcColors.mail, border: "3px solid #000" }} />
+            </div>
+            {/* Name tag below portrait */}
+            <div style={{ position: "absolute", bottom: "-28px", left: "-8px", right: "-8px", background: GOLD, border: `4px solid #000`, padding: "4px 0", textAlign: "center", fontSize: "6px", color: "#000", letterSpacing: "0.05em" }}>
+              THE CURATOR
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Speech box */}
-      <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: "420px", margin: "0 16px" }}>
-        {/* speech pointer triangle */}
-        <div style={{ position: "absolute", bottom: "22px", left: "-14px", width: 0, height: 0, borderTop: "10px solid transparent", borderBottom: "10px solid transparent", borderRight: `14px solid ${GOLD}` }} />
-        <div style={{ position: "absolute", bottom: "24px", left: "-10px", width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderRight: `12px solid #0d0a04` }} />
+        {/* Pixel speech tail — stepped squares pointing left-down toward NPC */}
+        <div style={{ position: "absolute", bottom: "100%", left: "96px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
+          <div style={{ width: "16px", height: "16px", background: GOLD }} />
+          <div style={{ width: "12px", height: "12px", background: GOLD, marginLeft: "4px" }} />
+          <div style={{ width: "8px",  height: "8px",  background: GOLD, marginLeft: "8px" }} />
+        </div>
 
-        {/* drop shadow */}
-        <div style={{ position: "absolute", top: "6px", left: "6px", right: "-6px", bottom: "-6px", background: "#000" }} />
-
-        {/* box */}
-        <div style={{ position: "relative", background: "#0d0a04", border: `4px solid ${GOLD}`, outline: `2px solid ${DGOLD}` }}>
-          {/* gold dashed top bar */}
-          <div style={{ height: "4px", background: `repeating-linear-gradient(90deg, ${GOLD} 0px, ${GOLD} 6px, ${DGOLD} 6px, ${DGOLD} 10px)` }} />
-
-          <div style={{ padding: "14px 16px 12px" }}>
-            {/* speaker label */}
-            <div style={{ fontSize: "7px", color: GOLD, letterSpacing: "0.12em", marginBottom: "8px", borderBottom: `2px solid ${DGOLD}`, paddingBottom: "6px" }}>
-              THE CURATOR <span style={{ color: "#5a8a60", fontWeight: "normal" }}>— KEEPER OF LOST THINGS</span>
-            </div>
-
-            {/* speech text */}
-            <div style={{ fontSize: "7px", color: "#ecdcc0", lineHeight: "2.3", marginBottom: "12px", minHeight: "52px" }}>
-              <TypewriterLine text={`Ah. Another one who slipped through. Don't worry — I've catalogued worse. Deliver the lost mail. Every parcel is a step back home.`} speed={18} />
-            </div>
-
-            {/* mission + controls board inset */}
-            <div style={{ border: `3px solid ${DGOLD}`, background: "#080602", padding: "10px", marginBottom: "12px", fontSize: "6px", color: "#c8a870", lineHeight: "2.1" }}>
-              <div style={{ color: GOLD, letterSpacing: "0.1em", marginBottom: "4px", borderBottom: `1px solid ${DGOLD}`, paddingBottom: "3px" }}>YOUR MISSION</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px", marginBottom: "8px" }}>
-                <div>✦ COLLECT LOST MAIL</div><div>✦ REACH THE HOUSE</div>
-                <div>✦ 70% QUOTA</div><div>✦ 10 STAGES</div>
-              </div>
-              <div style={{ color: GOLD, letterSpacing: "0.1em", marginBottom: "4px", borderBottom: `1px solid ${DGOLD}`, paddingBottom: "3px" }}>CONTROLS</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px" }}>
-                <div><span style={{ color: npcColors.mail }}>A/D ← →</span> MOVE</div>
-                <div><span style={{ color: npcColors.mail }}>W / SPACE</span> JUMP</div>
-                <div><span style={{ color: npcColors.mail }}>R</span> RETRY LEVEL</div>
-                <div><span style={{ color: npcColors.mail }}>M</span> MAP / HOME</div>
-              </div>
-            </div>
-
-            {btn("[ BEGIN DELIVERY ]", onStart)}
+        {/* Main speech box */}
+        <div style={{ background: PARCH, borderTop: `8px solid ${GOLD}`, borderLeft: `8px solid ${GOLD}`, borderRight: `8px solid ${GOLD}`, borderBottom: "none", boxShadow: `inset 0 0 0 4px #000`, padding: "20px 28px 24px" }}>
+          {/* Speaker name bar */}
+          <div style={{ background: GOLD, border: `4px solid #000`, padding: "8px 16px", marginBottom: "14px", display: "inline-block", boxShadow: `4px 4px 0 #000` }}>
+            <span style={{ fontSize: "12px", color: "#000", letterSpacing: "0.1em" }}>THE CURATOR</span>
+            <span style={{ fontSize: "10px", color: BGDARK, marginLeft: "12px", opacity: 0.8 }}>— KEEPER OF LOST THINGS</span>
           </div>
 
-          {/* gold dashed bottom bar */}
-          <div style={{ height: "4px", background: `repeating-linear-gradient(90deg, ${GOLD} 0px, ${GOLD} 6px, ${DGOLD} 6px, ${DGOLD} 10px)` }} />
+          {/* Speech text */}
+          <div style={{ fontSize: "20px", color: "rgba(65, 42, 25, 0.99)", lineHeight: "2.4", marginBottom: "18px", minHeight: "56px", maxWidth: "860px" }}>
+            <TypewriterLine text={`Ah. Another one who slipped through. Don't worry — I've catalogued worse. This place is an alternate reality to the real world-- we must deliver the proper packages in order for you to return home. Every parcel is a step back home. Good luck!`} speed={16} />
+          </div>
+
+          {/* Mission + controls in two side-by-side pixel panels */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "18px" }}>
+            {/* Mission panel */}
+            <div style={{ background:PARCH, border: `6px solid ${DKBRN}`, boxShadow: `inset 0 0 0 2px #000`, padding: "12px 14px" }}>
+              <div style={{ fontSize: "16px", color: BGDARK, letterSpacing: "0.12em", marginBottom: "10px", paddingBottom: "6px", borderBottom: `3px solid ${DGOLD}` }}>YOUR MISSION</div>
+              <div style={{ fontSize: "13px", color: DKBRN, lineHeight: "2.4" }}>
+                <div>&#x25B8; COLLECT LOST MAIL</div>
+                <div>&#x25B8; REACH THE HOUSE</div>
+                <div>&#x25B8; COMPLETE 10 STAGES TOTAL</div>
+                <div>&#x25B8; RETURN HOME</div>
+              </div>
+            </div>
+            {/* Controls panel */}
+            <div style={{ background: PARCH, border: `6px solid ${DKBRN}`, boxShadow: `inset 0 0 0 2px #000`, padding: "12px 14px" }}>
+              <div style={{ fontSize: "16px", color: DKBRN, letterSpacing: "0.12em", marginBottom: "10px", paddingBottom: "6px", borderBottom: `3px solid ${DGOLD}` }}>CONTROLS</div>
+              <div style={{ fontSize: "13px", color: BGDARK, lineHeight: "2.4" }}>
+                <div><span style={{ color: "rgb(222, 0, 0)" }}>A / D</span>  MOVE LEFT/RIGHT</div>
+                <div><span style={{ color: "rgb(222, 0, 0)" }}>W / SPACE</span>  JUMP</div>
+                <div><span style={{ color: "rgb(222, 0, 0)" }}>R</span>  RETRY LEVEL</div>
+                <div><span style={{ color: "rgb(222, 0, 0)" }}>M</span>  MAP / HOME</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Begin button */}
+          <PixelBtn label="[ BEGIN DELIVERY ]" onClick={onStart} color={"rgb(222, 0, 0)"} bg={PARCH} fontSize={"16px"}/>
         </div>
       </div>
     </div>
