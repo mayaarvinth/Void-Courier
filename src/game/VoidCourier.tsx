@@ -2,6 +2,11 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import courierAsset from "@/assets/courier.png";
 import DevPanel from "../components/ui/DevPanel";
 import bgAsset from "@/assets/the-void-background.png";
+import bgmSrc from "@/assets/2015-09-25_-_Old_Video_Game_Music_1_-_David_Fesliyan.mp3";
+import cozySrc from "@/assets/8BitNostalgia.mp3";
+import jumpSrc from "@/assets/dragon-studio-cartoon-jump-463196.mp3";
+import deathSrc from "@/assets/freesound_community-videogame-death-sound-43894.mp3";
+import levelUpSrc from "@/assets/latent-rick-retro-arcade-level-up-552982.mp3";
 
 const VW = 256;
 const VH = 144;
@@ -92,9 +97,9 @@ const LEVELS: Tile[][][] = [
     "                       ####                                             ",
     "                                       M           M                    ",
     "       ####                                                 ###         ",
-    "                  M             ###          ###                 M      ",
-    "  M                       ####                                              ",
-    " ###      ##  S  ###   S   ##  S  ###   S  ##    S    ##           ## H ",
+    "                  M               ###      ###                 M      ",
+    "  M                           ####                                              ",
+    " ###      ##  S  ###   S ##    S  ###   S  ##    S    ##           ## H ",
     "                                                                      # ",
     "###  SS  ###  SS  ###  SS  ###  SS  ###  SS  ###  SS  ###  SS  ##  #####",
     "########################################################################",
@@ -117,9 +122,8 @@ const LEVELS: Tile[][][] = [
     "                                                                                                ",
     "          M                  M                  M                  M                 M          ",
     "       ####               ####              #####                ####             ####          ",
-    "                M                   M                   M                   M                   ",
-    "             ###                 ###                 ###                 ###                    ",
-    "                                                                                                ",
+    "              M                     M                   M                   M                   ",
+    "             ###      ##           ###                 ###                 ###                    ",
     "  M                                                                                             ",
     "####     ####       ####       ####       ####       ####       ####       ####         ####  H",
     "                                                                                            ####",
@@ -127,8 +131,8 @@ const LEVELS: Tile[][][] = [
   ]),
   makeLevel([
     "                                                                                                            ",
-    "                M           M           M           M           M           M           M           M       ",
-    "             ###         ####        ####        ####        ####        ####        ####        ####      ",
+    "                M                            M          M           M           M           M       ",
+    "             ###                      ####        ####        ####        ####        ####        ####      ",
     "        M                   M                   M                   M                   M           M       ",
     "     ####                ####                ####                ####                ####        ####       ",
     "                                                                                                            ",
@@ -317,6 +321,72 @@ export default function VoidCourier() {
   const [endlessBest, setEndlessBest] = useState(0);
   const [lastReward, setLastReward] = useState<Powerup | null>(null);
 
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
+  const cozyRef2 = useRef<HTMLAudioElement | null>(null);
+  const jumpAudioRef = useRef<HTMLAudioElement | null>(null);
+  const deathAudioRef = useRef<HTMLAudioElement | null>(null);
+  const levelUpAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const bgm = new Audio(bgmSrc);
+    bgm.loop = true;
+    bgm.volume = 0.45;
+    bgmRef.current = bgm;
+
+    const cozy = new Audio(cozySrc);
+    cozy.loop = true;
+    cozy.volume = 0.45;
+    cozyRef2.current = cozy;
+
+    jumpAudioRef.current = new Audio(jumpSrc);
+    jumpAudioRef.current.volume = 0.55;
+
+    deathAudioRef.current = new Audio(deathSrc);
+    deathAudioRef.current.volume = 0.6;
+
+    levelUpAudioRef.current = new Audio(levelUpSrc);
+    levelUpAudioRef.current.volume = 0.65;
+
+    return () => {
+      bgm.pause();
+      cozy.pause();
+    };
+  }, []);
+
+  const playJump = useCallback(() => {
+    if (!jumpAudioRef.current) return;
+    jumpAudioRef.current.currentTime = 0;
+    jumpAudioRef.current.play().catch(() => {});
+  }, []);
+
+  const playDeath = useCallback(() => {
+    if (!deathAudioRef.current) return;
+    deathAudioRef.current.currentTime = 0;
+    deathAudioRef.current.play().catch(() => {});
+  }, []);
+
+  const playLevelUp = useCallback(() => {
+    if (!levelUpAudioRef.current) return;
+    levelUpAudioRef.current.currentTime = 0;
+    levelUpAudioRef.current.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const isCozy = scene === "earthCozy" || scene === "earthCozyDone";
+    if (isCozy) {
+      bgmRef.current?.pause();
+      if (cozyRef2.current && cozyRef2.current.paused) {
+        cozyRef2.current.play().catch(() => {});
+      }
+    } else {
+      cozyRef2.current?.pause();
+      if (bgmRef.current && bgmRef.current.paused) {
+        bgmRef.current.play().catch(() => {});
+      }
+    }
+  }, [scene]);
+  
+
   const STORY_SLIDES = [
     { title: "THE VOID", lines: ["Before time was tidy, things could slip.", "A forgotten name. A letter never sent.", "A future nobody chose.", "They all fell — through the cracks", "between what was and what remained.", "They fell into THE VOID."] },
     { title: "THE VOID IS FULL", lines: ["The Void was never meant to be a place.", "But places grow wherever enough things", "are lost together.", "Civilizations. Clocks. Carousel horses.", "And mail. So much undelivered mail.", "It piles up. It drifts. It waits."] },
@@ -338,6 +408,8 @@ export default function VoidCourier() {
   const scoreRef = useRef(0);
   const bestRef = useRef(0);
 
+  
+
   useEffect(() => { collectedRef.current = collected; }, [collected]);
   useEffect(() => { totalMailRef.current = totalMail; }, [totalMail]);
   useEffect(() => { scoreRef.current = endlessScore; }, [endlessScore]);
@@ -346,6 +418,7 @@ export default function VoidCourier() {
   const playerRef = useRef<Player>({ x: 32, y: 0, vx: 0, vy: 0, onGround: false, facing: 1, runFrame: 0, jumpsLeft: 1 });
   const mailsRef = useRef<Mail[]>([]);
   const cameraRef = useRef(0);
+  const cameraYRef = useRef(0);
   const voidEdgeRef = useRef(0);
   const keysRef = useRef<Record<string, boolean>>({});
   const starsRef = useRef<{ x: number; y: number; s: number }[]>([]);
@@ -379,6 +452,7 @@ export default function VoidCourier() {
     setCollected(0);
     playerRef.current = { x: 24, y: 0, vx: 0, vy: 0, onGround: false, facing: 1, runFrame: 0, jumpsLeft: 2 };
     cameraRef.current = 0;
+    cameraYRef.current = 0;
     voidEdgeRef.current = -40;
   }, []);
 
@@ -390,6 +464,7 @@ export default function VoidCourier() {
     setCollected(0);
     playerRef.current = { x: 24, y: 0, vx: 0, vy: 0, onGround: false, facing: 1, runFrame: 0, jumpsLeft: 2 };
     cameraRef.current = 0;
+    cameraYRef.current = 0;
     voidEdgeRef.current = -40;
     endlessDistRef.current = 0;
     setEndlessScore(0);
@@ -467,6 +542,7 @@ export default function VoidCourier() {
       tickRef.current++;
       const t = tickRef.current;
       const s = sceneRef.current;
+      const p = playerRef.current;
       ctx.fillStyle = C.void;
       ctx.fillRect(0, 0, VW, VH);
 
@@ -493,11 +569,11 @@ export default function VoidCourier() {
         if (jumpPressed) {
           jumpHeldRef.current = true;
           const maxJumps = pu.includes("doubleJump") ? 2 : 1;
-          if (p.onGround) { p.vy = -5.2; p.onGround = false; p.jumpsLeft = maxJumps - 1; }
-          else if (p.jumpsLeft > 0) { p.vy = -4.6; p.jumpsLeft--; }
+          if (p.onGround) { p.vy = -6.4; p.onGround = false; p.jumpsLeft = maxJumps - 1; playJump(); }
+          else if (p.jumpsLeft > 0) { p.vy = -5.8; p.jumpsLeft--; playJump(); }
         }
 
-        p.vy += 0.22;
+        p.vy += 0.28;
         if (p.vy > 6) p.vy = 6;
 
         p.x += p.vx;
@@ -534,6 +610,12 @@ export default function VoidCourier() {
         if (cameraRef.current < 0) cameraRef.current = 0;
         const maxCam = lvl[0].length * TS - VW;
         if (cameraRef.current > maxCam) cameraRef.current = maxCam;
+
+        const targetCamY = p.y - VH / 2;
+        cameraYRef.current += (targetCamY - cameraYRef.current) * 0.12;
+        if (cameraYRef.current < 0) cameraYRef.current = 0;
+        const maxCamY = Math.max(0, lvl.length * TS - VH);
+        if (cameraYRef.current > maxCamY) cameraYRef.current = maxCamY;
 
         const lvlForSpeed = modeRef.current === "endless" ? Math.floor(endlessDistRef.current / 800) : levelRef.current;
         voidEdgeRef.current += 0.3 + lvlForSpeed * 0.15;
@@ -574,7 +656,13 @@ export default function VoidCourier() {
               const hx = c * TS - 8, hy = r * TS - 4;
               if (p.x + pw > hx && p.x < hx + 24 && p.y + ph > hy && p.y < hy + 24) {
                 const needed = Math.ceil(totalMailRef.current * MAIL_QUOTA);
-                setScene(collectedRef.current >= needed ? "levelComplete" : "levelFailed");
+                if (collectedRef.current >= needed) {
+                  setScene("levelComplete");
+                  playLevelUp();
+                } else {
+                  setScene("levelFailed");
+                  playDeath();
+                }
               }
             }
           }
@@ -603,12 +691,13 @@ export default function VoidCourier() {
         if (!dead && p.x + pw < voidEdgeRef.current) {
           if (consumeShield()) voidEdgeRef.current = p.x - 30; else dead = true;
         }
-        if (!dead && p.y > VH + 8) dead = true;
+        if (!dead && p.y > lvl.length * TS + 16) dead = true;
         if (dead) {
           if (modeRef.current === "endless") {
             setEndlessBest((b) => Math.max(b, scoreRef.current));
             setScene("endlessDead");
           } else setScene("dead");
+          playDeath();
         }
       } else if (s === "minigame") {
         updateMinigame();
@@ -627,15 +716,24 @@ export default function VoidCourier() {
           const scrollX = (s === "playing" || s === "dead" || s === "levelComplete" || s === "levelFailed" || s === "endlessDead")
             ? cameraRef.current * 0.45
             : t * 0.15;
+          const scrollYBg = (s === "playing" || s === "dead" || s === "levelComplete" || s === "levelFailed" || s === "endlessDead")
+            ? Math.floor(cameraYRef.current * 0.25)
+            : 0;
           const offset = ((scrollX % bw) + bw) % bw;
           for (let bx = -offset; bx < VW + bw; bx += bw) {
-            ctx.drawImage(bgImg, Math.floor(bx), 0, bw, VH);
+            ctx.drawImage(bgImg, Math.floor(bx), -scrollYBg, bw, VH + scrollYBg + 2);
           }
         }
 
         for (const st of starsRef.current) {
           ctx.fillStyle = (t + st.x) % 80 < 40 ? C.star : "#9a8acc";
           ctx.fillRect(st.x, st.y, st.s, st.s);
+        }
+
+        if (s === "intro") {
+          if (Math.floor(t / 28) % 2 === 0) {
+            drawTextPixel(ctx, "PRESS I TO START!", VW / 2, VH / 2 - 6, C.mail, true, 2);
+          }
         }
 
         if (s === "falling") {
@@ -660,7 +758,10 @@ export default function VoidCourier() {
             ctx.fillRect(bx + 19 - i, by + 4 + i, 1, 10 - i * 2);
           }
           ctx.fillRect(bx + 13, by + 9, 2, 2);
-          if (Math.floor(t / 20) % 2 === 0) drawTextPixel(ctx, "PRESS I", VW / 2, VH - 8, C.mail, true, 1);
+          if (Math.floor(t / 20) % 2 === 0) {
+            drawTextPixel(ctx, "PRESS I TO", VW / 2, VH - 30, C.mail, true, 2);
+            drawTextPixel(ctx, "START!", VW / 2, VH - 16, C.mail, true, 2);
+          }
         }
 
         if (s === "playing" || s === "dead" || s === "levelComplete" || s === "levelFailed" || s === "endlessDead") renderPlay(ctx, t, s);
@@ -673,18 +774,19 @@ export default function VoidCourier() {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [collected, totalMail, lastReward, endlessScore, endlessBest, bgReady]);
+  }, [collected, totalMail, lastReward, endlessScore, endlessBest, bgReady, playJump, playDeath, playLevelUp]);
 
   const renderPlay = (ctx: CanvasRenderingContext2D, t: number, s: Scene) => {
     const lvl = getLvl();
     const cam = Math.floor(cameraRef.current);
+    const camY = Math.floor(cameraYRef.current);
     const startCol = Math.max(0, Math.floor(cam / TS) - 1);
     const endCol = Math.min(lvl[0].length, startCol + Math.ceil(VW / TS) + 2);
     for (let r = 0; r < lvl.length; r++) {
       for (let c = startCol; c < endCol; c++) {
         const tile = lvl[r][c];
         const x = c * TS - cam;
-        const y = r * TS - 32; 
+        const y = r * TS - camY;
         if (tile === "#") {
           ctx.fillStyle = C.outline; ctx.fillRect(x, y, TS, TS);
           ctx.fillStyle = C.brick; ctx.fillRect(x + 1, y + 1, TS - 2, TS - 3);
@@ -706,18 +808,19 @@ export default function VoidCourier() {
       const off = Math.sin(m.bob) * 1;
       ctx.fillStyle = C.mail;
       ctx.globalAlpha = 0.4;
-      ctx.fillRect(mx - 2, m.y + off - 31, 12, 6); 
+      ctx.fillRect(mx - 2, m.y + off - camY + 1, 12, 6); 
       ctx.globalAlpha = 1;
-      drawMail(ctx, mx, m.y + off - 32);
+      drawMail(ctx, mx, m.y + off - camY);
     }
 
     const p = playerRef.current;
-    drawCourier(ctx, Math.floor(p.x - cam) - 4, Math.floor(p.y) - 36, p.facing, !p.onGround);
+    const deadzone = 40;
+    drawCourier(ctx, Math.floor(p.x - cam) - 4, Math.floor(p.y) - camY - 4, p.facing, !p.onGround);
 
     if (powerupsRef.current.includes("shield")) {
       ctx.strokeStyle = C.shield; ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(Math.floor(p.x - cam) + 4, Math.floor(p.y) - 25, 10 + Math.sin(t * 0.2), 0, Math.PI * 2);
+      ctx.arc(Math.floor(p.x - cam) + 4, Math.floor(p.y) - camY + 7, 10 + Math.sin(t * 0.2), 0, Math.PI * 2);
       ctx.stroke();
     }
 
@@ -760,28 +863,68 @@ export default function VoidCourier() {
     }
 
     if (s === "levelComplete") {
-      ctx.fillStyle = "rgba(10,6,18,0.85)"; ctx.fillRect(0, 0, VW, VH);
-      drawTextPixel(ctx, "DELIVERED!", VW / 2, VH / 2 - 28, C.crt, true, 2);
-      drawTextPixel(ctx, `${collectedRef.current} / ${totalMailRef.current} MAIL`, VW / 2, VH / 2 - 8, C.hudFg, true, 1);
-      drawTextPixel(ctx, levelRef.current === TOTAL_LEVELS - 1 ? "SPACE  REACH EARTH" : "SPACE  MINI-GAME", VW / 2, VH / 2 + 10, C.mail, true, 1);
+      ctx.fillStyle = "rgba(10,6,18,0.92)"; ctx.fillRect(0, 0, VW, VH);
+      
+      ctx.fillStyle = C.crt; ctx.fillRect(VW/2 - 72, VH/2 - 48, 144, 96);
+      ctx.fillStyle = "#000";  ctx.fillRect(VW/2 - 72, VH/2 - 48, 144, 4);
+      ctx.fillStyle = "#000";  ctx.fillRect(VW/2 - 72, VH/2 + 44, 144, 4);
+      ctx.fillStyle = "#000";  ctx.fillRect(VW/2 - 72, VH/2 - 48, 4, 96);
+      ctx.fillStyle = "#000";  ctx.fillRect(VW/2 + 68, VH/2 - 48, 4, 96);
+      ctx.fillStyle = "#0a0820"; ctx.fillRect(VW/2 - 68, VH/2 - 44, 136, 88);
+      
+      ctx.fillStyle = C.crt;
+      ctx.fillRect(VW/2 - 68, VH/2 - 44, 8, 4); ctx.fillRect(VW/2 + 60, VH/2 - 44, 8, 4);
+      ctx.fillRect(VW/2 - 68, VH/2 + 40, 8, 4); ctx.fillRect(VW/2 + 60, VH/2 + 40, 8, 4);
+      drawTextPixel(ctx, "DELIVERED!", VW / 2, VH / 2 - 32, C.crt, true, 3);
+      drawTextPixel(ctx, `${collectedRef.current} / ${totalMailRef.current} MAIL`, VW / 2, VH / 2 + 4, C.hudFg, true, 2);
+      drawTextPixel(ctx, levelRef.current === TOTAL_LEVELS - 1 ? "SPACE: REACH EARTH" : "SPACE: MINI-GAME", VW / 2, VH / 2 + 26, C.mail, true, 1);
     }
     if (s === "levelFailed") {
-      ctx.fillStyle = "rgba(40,6,18,0.85)"; ctx.fillRect(0, 0, VW, VH);
-      drawTextPixel(ctx, "DELIVERY REJECTED", VW / 2, VH / 2 - 28, C.mailStamp, true, 2);
-      drawTextPixel(ctx, `ONLY ${collectedRef.current} OF ${needed} NEEDED`, VW / 2, VH / 2 - 8, C.hudFg, true, 1);
-      drawTextPixel(ctx, "PRESS R TO RETRY LEVEL", VW / 2, VH / 2 + 10, C.mail, true, 1);
+      ctx.fillStyle = "rgba(40,6,18,0.92)"; ctx.fillRect(0, 0, VW, VH);
+      ctx.fillStyle = C.mailStamp; ctx.fillRect(VW/2 - 80, VH/2 - 48, 160, 96);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 80, VH/2 - 48, 160, 4);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 80, VH/2 + 44, 160, 4);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 80, VH/2 - 48, 4, 96);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 + 76, VH/2 - 48, 4, 96);
+      ctx.fillStyle = "#280618"; ctx.fillRect(VW/2 - 76, VH/2 - 44, 152, 88);
+      ctx.fillStyle = C.mailStamp;
+      ctx.fillRect(VW/2 - 76, VH/2 - 44, 8, 4); ctx.fillRect(VW/2 + 68, VH/2 - 44, 8, 4);
+      ctx.fillRect(VW/2 - 76, VH/2 + 40, 8, 4); ctx.fillRect(VW/2 + 68, VH/2 + 40, 8, 4);
+      drawTextPixel(ctx, "REJECTED", VW / 2, VH / 2 - 32, C.mailStamp, true, 3);
+      drawTextPixel(ctx, `ONLY ${collectedRef.current} OF ${needed}`, VW / 2, VH / 2 + 4, C.hudFg, true, 2);
+      drawTextPixel(ctx, "R: RETRY LEVEL", VW / 2, VH / 2 + 26, C.mail, true, 1);
     }
     if (s === "dead") {
-      ctx.fillStyle = "rgba(10,6,18,0.85)"; ctx.fillRect(0, 0, VW, VH);
-      drawTextPixel(ctx, "CONSUMED BY VOID", VW / 2, VH / 2 - 10, C.mailStamp, true, 2);
-      drawTextPixel(ctx, "PRESS R TO RETRY", VW / 2, VH / 2 + 14, C.hudFg, true, 1);
+      ctx.fillStyle = "rgba(10,6,18,0.92)"; ctx.fillRect(0, 0, VW, VH);
+      ctx.fillStyle = C.mailStamp; ctx.fillRect(VW/2 - 72, VH/2 - 44, 144, 88);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 72, VH/2 - 44, 144, 4);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 72, VH/2 + 40, 144, 4);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 72, VH/2 - 44, 4, 88);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 + 68, VH/2 - 44, 4, 88);
+      ctx.fillStyle = "#0a0820"; ctx.fillRect(VW/2 - 68, VH/2 - 40, 136, 80);
+      ctx.fillStyle = C.mailStamp;
+      ctx.fillRect(VW/2 - 68, VH/2 - 40, 8, 4); ctx.fillRect(VW/2 + 60, VH/2 - 40, 8, 4);
+      ctx.fillRect(VW/2 - 68, VH/2 + 36, 8, 4); ctx.fillRect(VW/2 + 60, VH/2 + 36, 8, 4);
+      drawTextPixel(ctx, "VOID", VW / 2, VH / 2 - 28, C.mailStamp, true, 3);
+      drawTextPixel(ctx, "CONSUMED", VW / 2, VH / 2 - 8, C.mailStamp, true, 3);
+      drawTextPixel(ctx, "R: RETRY", VW / 2, VH / 2 + 22, C.hudFg, true, 2);
     }
     if (s === "endlessDead") {
-      ctx.fillStyle = "rgba(10,6,18,0.85)"; ctx.fillRect(0, 0, VW, VH);
-      drawTextPixel(ctx, "ENDLESS OVER", VW / 2, VH / 2 - 30, C.mailStamp, true, 2);
-      drawTextPixel(ctx, `SCORE ${scoreRef.current}`, VW / 2, VH / 2 - 8, C.crt, true, 1);
-      drawTextPixel(ctx, `BEST  ${Math.max(bestRef.current, scoreRef.current)}`, VW / 2, VH / 2 + 4, C.hudFg, true, 1);
-      drawTextPixel(ctx, "R RETRY    M HOME", VW / 2, VH / 2 + 22, C.mail, true, 1);
+      ctx.fillStyle = "rgba(10,6,18,0.92)"; ctx.fillRect(0, 0, VW, VH);
+      ctx.fillStyle = C.mailStamp; ctx.fillRect(VW/2 - 76, VH/2 - 52, 152, 104);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 76, VH/2 - 52, 152, 4);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 76, VH/2 + 48, 152, 4);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 76, VH/2 - 52, 4, 104);
+      ctx.fillStyle = "#000"; ctx.fillRect(VW/2 + 72, VH/2 - 52, 4, 104);
+      ctx.fillStyle = "#0a0820"; ctx.fillRect(VW/2 - 72, VH/2 - 48, 144, 96);
+      ctx.fillStyle = C.mailStamp;
+      ctx.fillRect(VW/2 - 72, VH/2 - 48, 8, 4); ctx.fillRect(VW/2 + 64, VH/2 - 48, 8, 4);
+      ctx.fillRect(VW/2 - 72, VH/2 + 44, 8, 4); ctx.fillRect(VW/2 + 64, VH/2 + 44, 8, 4);
+      drawTextPixel(ctx, "ENDLESS", VW / 2, VH / 2 - 38, C.mailStamp, true, 3);
+      drawTextPixel(ctx, "OVER", VW / 2, VH / 2 - 18, C.mailStamp, true, 3);
+      drawTextPixel(ctx, `SCORE ${scoreRef.current}`, VW / 2, VH / 2 + 8, C.crt, true, 2);
+      drawTextPixel(ctx, `BEST  ${Math.max(bestRef.current, scoreRef.current)}`, VW / 2, VH / 2 + 22, C.hudFg, true, 2);
+      drawTextPixel(ctx, "R RETRY    M HOME", VW / 2, VH / 2 + 38, C.mail, true, 1);
     }
   };
 
@@ -894,11 +1037,20 @@ export default function VoidCourier() {
     drawTextPixel(ctx, "ARROWS  WANDER", COZY_W - 4, 4, C.hudFg, false, 1, "right");
 
     if (sceneRef.current === "earthCozyDone") {
-      ctx.fillStyle = "rgba(10,40,20,0.65)";
+      ctx.fillStyle = "rgba(10,40,20,0.88)";
       ctx.fillRect(0, 0, COZY_W, COZY_H);
-      drawTextPixel(ctx, "ALL DELIVERED.", COZY_W / 2, COZY_H / 2 - 16, C.crt, true, 2);
-      drawTextPixel(ctx, "LOVELY DAY.", COZY_W / 2, COZY_H / 2 + 2, C.hudFg, true, 1);
-      drawTextPixel(ctx, "R HOME    SPACE PLAY AGAIN", COZY_W / 2, COZY_H / 2 + 18, C.mail, true, 1);
+      ctx.fillStyle = C.crt; ctx.fillRect(COZY_W/2 - 72, COZY_H/2 - 44, 144, 88);
+      ctx.fillStyle = "#000"; ctx.fillRect(COZY_W/2 - 72, COZY_H/2 - 44, 144, 4);
+      ctx.fillStyle = "#000"; ctx.fillRect(COZY_W/2 - 72, COZY_H/2 + 40, 144, 4);
+      ctx.fillStyle = "#000"; ctx.fillRect(COZY_W/2 - 72, COZY_H/2 - 44, 4, 88);
+      ctx.fillStyle = "#000"; ctx.fillRect(COZY_W/2 + 68, COZY_H/2 - 44, 4, 88);
+      ctx.fillStyle = "#0a2010"; ctx.fillRect(COZY_W/2 - 68, COZY_H/2 - 40, 136, 80);
+      ctx.fillStyle = C.crt;
+      ctx.fillRect(COZY_W/2 - 68, COZY_H/2 - 40, 8, 4); ctx.fillRect(COZY_W/2 + 60, COZY_H/2 - 40, 8, 4);
+      ctx.fillRect(COZY_W/2 - 68, COZY_H/2 + 36, 8, 4); ctx.fillRect(COZY_W/2 + 60, COZY_H/2 + 36, 8, 4);
+      drawTextPixel(ctx, "ALL DELIVERED", COZY_W / 2, COZY_H / 2 - 28, C.crt, true, 2);
+      drawTextPixel(ctx, "LOVELY DAY!", COZY_W / 2, COZY_H / 2 - 8, C.hudFg, true, 2);
+      drawTextPixel(ctx, "R HOME   SPACE AGAIN", COZY_W / 2, COZY_H / 2 + 20, C.mail, true, 1);
     }
   };
 
@@ -1012,18 +1164,30 @@ export default function VoidCourier() {
   };
 
   const renderMinigameResult = (ctx: CanvasRenderingContext2D) => {
-    drawTextPixel(ctx, "POWERUP EARNED", VW / 2, 30, C.crt, true, 2);
+    ctx.fillStyle = "rgba(10,6,18,0.92)"; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = C.crt; ctx.fillRect(VW/2 - 76, VH/2 - 60, 152, 120);
+    ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 76, VH/2 - 60, 152, 4);
+    ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 76, VH/2 + 56, 152, 4);
+    ctx.fillStyle = "#000"; ctx.fillRect(VW/2 - 76, VH/2 - 60, 4, 120);
+    ctx.fillStyle = "#000"; ctx.fillRect(VW/2 + 72, VH/2 - 60, 4, 120);
+    ctx.fillStyle = "#0a0820"; ctx.fillRect(VW/2 - 72, VH/2 - 56, 144, 112);
+    ctx.fillStyle = C.crt;
+    ctx.fillRect(VW/2 - 72, VH/2 - 56, 8, 4); ctx.fillRect(VW/2 + 64, VH/2 - 56, 8, 4);
+    ctx.fillRect(VW/2 - 72, VH/2 + 52, 8, 4); ctx.fillRect(VW/2 + 64, VH/2 + 52, 8, 4);
+    drawTextPixel(ctx, "POWERUP", VW / 2, VH / 2 - 48, C.crt, true, 3);
+    drawTextPixel(ctx, "EARNED!", VW / 2, VH / 2 - 28, C.crt, true, 3);
     if (lastReward) {
       ctx.fillStyle = POWERUP_COLORS[lastReward as Powerup];
-      ctx.fillRect(VW / 2 - 16, 56, 32, 20);
-      ctx.fillStyle = C.outline;
-      ctx.fillRect(VW / 2 - 16, 56, 32, 1); ctx.fillRect(VW / 2 - 16, 75, 32, 1);
-      ctx.fillRect(VW / 2 - 16, 56, 1, 20); ctx.fillRect(VW / 2 + 15, 56, 1, 20);
-      drawTextPixel(ctx, POWERUP_NAMES[lastReward as Powerup], VW / 2, 86, C.hudFg, true, 1);
+      ctx.fillRect(VW / 2 - 20, VH / 2 - 4, 40, 24);
+      ctx.fillStyle = "#000";
+      ctx.fillRect(VW / 2 - 20, VH / 2 - 4, 40, 3); ctx.fillRect(VW / 2 - 20, VH / 2 + 21, 40, 3);
+      ctx.fillRect(VW / 2 - 20, VH / 2 - 4, 3, 24); ctx.fillRect(VW / 2 + 17, VH / 2 - 4, 3, 24);
+      drawTextPixel(ctx, POWERUP_NAMES[lastReward as Powerup], VW / 2, VH / 2 + 30, C.hudFg, true, 1);
     } else {
-      drawTextPixel(ctx, "NOTHING THIS TIME", VW / 2, 66, C.hudFg, true, 1);
+      drawTextPixel(ctx, "NOTHING", VW / 2, VH / 2 + 4, C.hudFg, true, 2);
+      drawTextPixel(ctx, "THIS TIME", VW / 2, VH / 2 + 20, C.hudFg, true, 2);
     }
-    drawTextPixel(ctx, "PRESS SPACE TO CONTINUE", VW / 2, VH - 14, C.mail, true, 1);
+    drawTextPixel(ctx, "SPACE: CONTINUE", VW / 2, VH / 2 + 46, C.mail, true, 1);
   };
 
   const handleCanvasClick = (_e: React.MouseEvent) => {};
@@ -1175,52 +1339,70 @@ function IntroOverlay({ phase, setPhase, storySlides, onStart, npcColors }: {
     else if (phase === 3) setPhase(4);
     else onStart();
   };
+  
+  const CREAM   = "#f5e8cc";
+  const PARCH   = "#e8d4a8";
+  const BROWN   = "#5a3010";
+  const DARKBRN = "#2e1808";
+  const LTBRN   = "#8a5a28";
 
-  const accent = phase === 1 ? "#5028a0" : phase === 2 ? "#c060a0" : phase === 3 ? "#a8ff80" : "#a8ff80";
-
-  /* CHANGED: Custom 8-bit repeating line block shader pattern */
-  const stripe = (color: string) => (
-    <div style={{ height: "8px", background: `repeating-linear-gradient(90deg, ${color} 0px, ${color} 4px, #000 4px, #000 8px)`, borderBottom: "3px solid #000" }} />
+  
+  const rule = () => (
+    <div style={{ height: "3px", background: `repeating-linear-gradient(90deg, ${BROWN} 0px, ${BROWN} 6px, ${PARCH} 6px, ${PARCH} 8px)`, margin: "10px 0" }} />
   );
 
-  /* CHANGED: Replaced standard continuous styles with hard pixel borders and layered offsets */
+  
   const btn = (label: string, onClick: () => void) => (
     <button onClick={onClick} style={{
       display: "block", width: "100%", padding: "10px 0",
-      fontFamily: '"Press Start 2P", monospace', fontSize: "8px", fontWeight: "bold", letterSpacing: "0.1em",
-      color: "#000", background: accent, border: "4px solid #000",
-      cursor: "pointer", boxShadow: "4px 4px 0px #000", transform: "translate(-2px, -2px)",
-      imageRendering: "pixelated"
+      fontFamily: '"Press Start 2P", monospace', fontSize: "8px", letterSpacing: "0.08em",
+      color: CREAM, background: BROWN, border: `3px solid ${DARKBRN}`,
+      cursor: "pointer", boxShadow: `4px 4px 0 ${DARKBRN}`, transform: "translate(-2px,-2px)",
+      imageRendering: "pixelated",
     }}
-      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.2)"; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.filter = ""; }}
-      onMouseDown={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(2px, 2px)"; b.style.boxShadow = "none"; }}
-      onMouseUp={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(-2px, -2px)"; b.style.boxShadow = "4px 4px 0px #000"; }}
+      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = LTBRN; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = BROWN; }}
+      onMouseDown={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(2px,2px)"; b.style.boxShadow = "none"; }}
+      onMouseUp={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(-2px,-2px)"; b.style.boxShadow = `4px 4px 0 ${DARKBRN}`; }}
     >{label}</button>
   );
 
+  
   if (isStory && slide) {
     return (
-      <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(3,2,10,0.92)", fontFamily: '"Press Start 2P", monospace' }}
+      <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,5,2,0.92)", fontFamily: '"Press Start 2P", monospace' }}
         onClick={advance}>
-        <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px)" }} />
-        <div style={{ position: "relative", width: "100%", maxWidth: "360px", margin: "0 16px" }} onClick={e => e.stopPropagation()}>
-          <div style={{ position: "absolute", top: "6px", left: "6px", right: "-6px", bottom: "-6px", background: "#000" }} />
-          <div style={{ position: "relative", background: "#0c0a1c", border: "4px solid #000" }}>
-            {stripe(accent)}
-            <div style={{ padding: "20px" }}>
-              <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "16px" }}>
-                {[1,2,3].map(i => (
-                  <div key={i} style={{ width: "8px", height: "8px", background: i === phase ? accent : "#140e28", border: "2px solid #000" }} />
-                ))}
+        {/* scanlines */}
+        <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px)" }} />
+
+        <div style={{ position: "relative", width: "100%", maxWidth: "480px", margin: "0 20px" }} onClick={e => e.stopPropagation()}>
+          {/* drop shadow */}
+          <div style={{ position: "absolute", top: "8px", left: "8px", right: "-8px", bottom: "-8px", background: DARKBRN }} />
+          {/* board body */}
+          <div style={{ position: "relative", background: PARCH, border: `5px solid ${BROWN}`, outline: `2px solid ${DARKBRN}` }}>
+            {/* top pin row */}
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 14px 0" }}>
+              {[0,1,2,3,4].map(i => <div key={i} style={{ width: "6px", height: "6px", borderRadius: "50%", background: BROWN, border: `2px solid ${DARKBRN}`, boxShadow: "1px 1px 0 #000" }} />)}
+            </div>
+
+            <div style={{ padding: "8px 20px 16px" }}>
+              {/* header: — TRANSMISSION N / 3 — */}
+              <div style={{ textAlign: "center", fontSize: "7px", color: LTBRN, letterSpacing: "0.15em", marginBottom: "6px" }}>
+                — TRANSMISSION {phase} / 3 —
               </div>
-              <div style={{ fontSize: "10px", fontWeight: "bold", color: accent, letterSpacing: "0.1em", textAlign: "center", marginBottom: "14px" }}>
+              {rule()}
+              {/* title */}
+              <div style={{ fontSize: "11px", fontWeight: "bold", color: BROWN, letterSpacing: "0.08em", textAlign: "center", marginBottom: "12px", textShadow: `1px 1px 0 ${DARKBRN}` }}>
                 {slide.title}
               </div>
-              <div style={{ minHeight: "110px", fontSize: "7px", color: "#c8b8f0", lineHeight: "2.2", letterSpacing: "0.05em" }}>
-                {slide.lines.slice(0, lineIdx).map((l, i) => <div key={i} style={{ marginBottom: "4px" }}>{l}</div>)}
+
+              {/* body text */}
+              <div style={{ minHeight: "120px", fontSize: "7px", color: DARKBRN, lineHeight: "2.4", letterSpacing: "0.06em" }}>
+                {slide.lines.slice(0, lineIdx).map((l, i) => (
+                  <div key={i} style={{ marginBottom: "3px" }}>{l}</div>
+                ))}
                 {lineIdx < slide.lines.length && (
-                  <div style={{ color: "#fff4ff" }}>
+                  <div>
                     <TypewriterLine
                       text={slide.lines[lineIdx]}
                       onDone={() => {
@@ -1231,63 +1413,106 @@ function IntroOverlay({ phase, setPhase, storySlides, onStart, npcColors }: {
                   </div>
                 )}
               </div>
-              <div style={{ marginTop: "16px" }}>
-                {btn(allDone ? (phase < 3 ? "NEXT >" : "CONTINUE >") : "SKIP >>", advance)}
+
+              {rule()}
+
+              {/* footer: dots + button */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px" }}>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {[1,2,3].map(i => (
+                    <div key={i} style={{ width: "8px", height: "8px", background: i === phase ? BROWN : PARCH, border: `2px solid ${BROWN}` }} />
+                  ))}
+                </div>
+                <div style={{ width: "180px" }}>
+                  {btn(allDone ? (phase < 3 ? "NEXT >" : "CONTINUE >") : "SKIP >>", advance)}
+                </div>
               </div>
             </div>
-            {stripe(accent)}
+
+            {/* bottom pin row */}
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 14px 6px" }}>
+              {[0,1,2,3,4].map(i => <div key={i} style={{ width: "6px", height: "6px", borderRadius: "50%", background: BROWN, border: `2px solid ${DARKBRN}`, boxShadow: "1px 1px 0 #000" }} />)}
+            </div>
           </div>
+        </div>
+
+        {/* click anywhere hint */}
+        <div style={{ position: "absolute", bottom: "20px", left: "50%", transform: "translateX(-50%)", fontSize: "6px", color: LTBRN, fontFamily: '"Press Start 2P", monospace', letterSpacing: "0.1em", opacity: 0.7 }}>
+          click / space to continue
         </div>
       </div>
     );
   }
 
+  
+  const GOLD = "#c8a030";
+  const DGOLD = "#7a5a10";
+
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "24px", background: "rgba(3,2,10,0.85)", fontFamily: '"Press Start 2P", monospace' }}>
+    <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "20px", background: "rgba(10,5,2,0.88)", fontFamily: '"Press Start 2P", monospace' }}>
+      {/* scanlines */}
       <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px)" }} />
 
-      <div style={{ position: "absolute", bottom: "28px", left: "calc(50% - 190px)", zIndex: 2, width: "48px" }}>
-        <div style={{ position: "relative", width: "32px", margin: "0 auto" }}>
-          <div style={{ position: "absolute", top: "-16px", left: "4px", width: "24px", height: "18px", background: npcColors.cloak, border: "2px solid #000" }} />
-          <div style={{ position: "absolute", top: "-10px", left: "8px", width: "16px", height: "10px", background: "#e8c89a", border: "2px solid #000" }} />
-          <div style={{ position: "absolute", top: "-7px", left: "10px", width: "2px", height: "2px", background: "#000" }} />
-          <div style={{ position: "absolute", top: "-7px", left: "20px", width: "2px", height: "2px", background: "#000" }} />
-          <div style={{ position: "absolute", top: "-2px", left: "8px", width: "16px", height: "5px", background: npcColors.beard }} />
-          <div style={{ width: "32px", height: "38px", background: npcColors.cloak, border: "2px solid #000" }} />
-          <div style={{ position: "absolute", top: "-20px", right: "-5px", width: "4px", height: "58px", background: "#6a4010", border: "2px solid #000" }} />
-          <div style={{ position: "absolute", top: "-22px", right: "-7px", width: "8px", height: "4px", background: npcColors.mail, border: "2px solid #000" }} />
+      {/* NPC sprite — left of bubble */}
+      <div style={{ position: "absolute", bottom: "28px", left: "calc(50% - 260px)", zIndex: 2, width: "48px" }}>
+        <div style={{ position: "relative", width: "36px", margin: "0 auto" }}>
+          <div style={{ position: "absolute", top: "-18px", left: "4px", width: "28px", height: "20px", background: npcColors.cloak, border: "2px solid #000" }} />
+          <div style={{ position: "absolute", top: "-11px", left: "9px", width: "18px", height: "11px", background: "#e8c89a", border: "2px solid #000" }} />
+          <div style={{ position: "absolute", top: "-8px", left: "12px", width: "3px", height: "3px", background: "#000" }} />
+          <div style={{ position: "absolute", top: "-8px", left: "22px", width: "3px", height: "3px", background: "#000" }} />
+          <div style={{ position: "absolute", top: "-2px", left: "9px", width: "18px", height: "6px", background: npcColors.beard }} />
+          <div style={{ width: "36px", height: "42px", background: npcColors.cloak, border: "2px solid #000" }} />
+          <div style={{ position: "absolute", top: "-22px", right: "-6px", width: "4px", height: "64px", background: "#6a4010", border: "2px solid #000" }} />
+          <div style={{ position: "absolute", top: "-24px", right: "-9px", width: "10px", height: "5px", background: npcColors.mail, border: "2px solid #000" }} />
         </div>
       </div>
 
-      <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: "340px", margin: "0 16px" }}>
-        <div style={{ position: "absolute", bottom: "20px", left: "-12px", width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderRight: "12px solid #000" }} />
+      {/* Speech box */}
+      <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: "420px", margin: "0 16px" }}>
+        {/* speech pointer triangle */}
+        <div style={{ position: "absolute", bottom: "22px", left: "-14px", width: 0, height: 0, borderTop: "10px solid transparent", borderBottom: "10px solid transparent", borderRight: `14px solid ${GOLD}` }} />
+        <div style={{ position: "absolute", bottom: "24px", left: "-10px", width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderRight: `12px solid #0d0a04` }} />
+
+        {/* drop shadow */}
         <div style={{ position: "absolute", top: "6px", left: "6px", right: "-6px", bottom: "-6px", background: "#000" }} />
-        <div style={{ position: "relative", background: "#08140c", border: "4px solid #000" }}>
-          {stripe(npcColors.crt)}
-          <div style={{ padding: "14px" }}>
-            <div style={{ fontSize: "8px", color: npcColors.crt, fontWeight: "bold", letterSpacing: "0.05em", marginBottom: "8px" }}>
-              THE CURATOR <span style={{ color: "#4a8a5a", fontWeight: "normal" }}>- KEEPER</span>
+
+        {/* box */}
+        <div style={{ position: "relative", background: "#0d0a04", border: `4px solid ${GOLD}`, outline: `2px solid ${DGOLD}` }}>
+          {/* gold dashed top bar */}
+          <div style={{ height: "4px", background: `repeating-linear-gradient(90deg, ${GOLD} 0px, ${GOLD} 6px, ${DGOLD} 6px, ${DGOLD} 10px)` }} />
+
+          <div style={{ padding: "14px 16px 12px" }}>
+            {/* speaker label */}
+            <div style={{ fontSize: "7px", color: GOLD, letterSpacing: "0.12em", marginBottom: "8px", borderBottom: `2px solid ${DGOLD}`, paddingBottom: "6px" }}>
+              THE CURATOR <span style={{ color: "#5a8a60", fontWeight: "normal" }}>— KEEPER OF LOST THINGS</span>
             </div>
-            <div style={{ fontSize: "7px", color: "#d8f8d8", lineHeight: "2.1", marginBottom: "10px", minHeight: "44px" }}>
-              <TypewriterLine text={`Ah. Another one who slipped through. Don't worry — I've catalogued worse. Deliver the lost mail. Every parcel is a step back home.`} speed={20} />
+
+            {/* speech text */}
+            <div style={{ fontSize: "7px", color: "#ecdcc0", lineHeight: "2.3", marginBottom: "12px", minHeight: "52px" }}>
+              <TypewriterLine text={`Ah. Another one who slipped through. Don't worry — I've catalogued worse. Deliver the lost mail. Every parcel is a step back home.`} speed={18} />
             </div>
-            <div style={{ border: "3px solid #000", background: "#040a04", padding: "8px", marginBottom: "12px", fontSize: "6px", color: "#a8d8a8", lineHeight: "2" }}>
-              <div style={{ color: npcColors.crt, fontWeight: "bold", marginBottom: "4px", borderBottom: "2px solid #142810", paddingBottom: "2px" }}>YOUR MISSION</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px", marginBottom: "8px" }}>
-                <div> COLLECT LOST MAIL</div><div> REACH THE HOUSE</div>
-                <div> REACH Quota: 70%</div><div> 10 STAGES LEFT</div>
+
+            {/* mission + controls board inset */}
+            <div style={{ border: `3px solid ${DGOLD}`, background: "#080602", padding: "10px", marginBottom: "12px", fontSize: "6px", color: "#c8a870", lineHeight: "2.1" }}>
+              <div style={{ color: GOLD, letterSpacing: "0.1em", marginBottom: "4px", borderBottom: `1px solid ${DGOLD}`, paddingBottom: "3px" }}>YOUR MISSION</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px", marginBottom: "8px" }}>
+                <div>✦ COLLECT LOST MAIL</div><div>✦ REACH THE HOUSE</div>
+                <div>✦ 70% QUOTA</div><div>✦ 10 STAGES</div>
               </div>
-              <div style={{ color: npcColors.crt, fontWeight: "bold", marginBottom: "4px", borderBottom: "2px solid #142810", paddingBottom: "2px" }}>CONTROLS</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px" }}>
-                <div><span style={{ color: npcColors.mail }}>A D / LEFT RIGHT</span></div>
+              <div style={{ color: GOLD, letterSpacing: "0.1em", marginBottom: "4px", borderBottom: `1px solid ${DGOLD}`, paddingBottom: "3px" }}>CONTROLS</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px" }}>
+                <div><span style={{ color: npcColors.mail }}>A/D ← →</span> MOVE</div>
                 <div><span style={{ color: npcColors.mail }}>W / SPACE</span> JUMP</div>
-                <div><span style={{ color: npcColors.mail }}>R</span> RETRY</div>
-                <div><span style={{ color: npcColors.mail }}>M</span> MAP SUMMARY</div>
+                <div><span style={{ color: npcColors.mail }}>R</span> RETRY LEVEL</div>
+                <div><span style={{ color: npcColors.mail }}>M</span> MAP / HOME</div>
               </div>
             </div>
+
             {btn("[ BEGIN DELIVERY ]", onStart)}
           </div>
-          {stripe(npcColors.crt)}
+
+          {/* gold dashed bottom bar */}
+          <div style={{ height: "4px", background: `repeating-linear-gradient(90deg, ${GOLD} 0px, ${GOLD} 6px, ${DGOLD} 6px, ${DGOLD} 10px)` }} />
         </div>
       </div>
     </div>
