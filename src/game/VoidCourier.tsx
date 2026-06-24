@@ -1,16 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import courierAsset from "@/assets/courier.png";
-// CHANGED: import the new repeating void background image so we can paint it behind the gameplay.
+import DevPanel from "../components/ui/DevPanel";
 import bgAsset from "@/assets/the-void-background.png";
 
-
-// ============================================================
-// VOID COURIER
-// ============================================================
-
 const VW = 256;
-const VH = 192;
-const FRAME_PADDING = 24;
+const VH = 144;
 
 const C = {
   void: "#0a0820",
@@ -64,7 +58,6 @@ const TS = 16;
 function makeLevel(layout: string[]): Tile[][] {
   return layout.map((row) => row.split("") as Tile[]);
 }
-
 const LEVELS: Tile[][][] = [
   makeLevel([
     "                                                            ",
@@ -84,9 +77,7 @@ const LEVELS: Tile[][][] = [
     "                                                            ",
     "                                                            ",
     "                M                          M                ",
-    "                                                            ",
-    "             ####                       ####                ",
-    "                          M                                 ",
+    "             ####        M               ####                ",                     
     "    M                  #####                      M         ",
     "                                                            ",
     "  ###       ##                  ##        ###          ###  ",
@@ -102,7 +93,7 @@ const LEVELS: Tile[][][] = [
     "                                       M           M                    ",
     "       ####                                                 ###         ",
     "                  M             ###          ###                 M      ",
-    "  M                                                                     ",
+    "  M                       ####                                              ",
     " ###      ##  S  ###   S   ##  S  ###   S  ##    S    ##           ## H ",
     "                                                                      # ",
     "###  SS  ###  SS  ###  SS  ###  SS  ###  SS  ###  SS  ###  SS  ##  #####",
@@ -112,22 +103,20 @@ const LEVELS: Tile[][][] = [
     "                                                                                    ",
     "                M                          M                       M                ",
     "             ###                        ####                    ####                ",
-    "                                                                                    ",
-    "       M                M                                M                          ",
+    "       M                M                               M                          ",
     "    ####             ####       ####                 ####           ####            ",
     "                                                                                    ",
-    "  ##           ##              ##         ##              ##              ##        ",
+    "  ##           ##              ##         ##                     ##                     ",
     "                                                                                  H ",
     "    SS   ##  S  ##  S  ##  SS  ##  S  ##  SS  ##  S  ##  SS  ##  S  ##  SS  ##  ####",
     "##  SSS  ##  S  ##  S  ##  SSS ##  S  ##  SSS ##  S  ##  SSS ##  S  ##  SSS ##  ####",
-    "################################################################................####",
+    "####################################################################################",
   ]),
   makeLevel([
     "                                                                                                ",
     "                                                                                                ",
     "          M                  M                  M                  M                 M          ",
     "       ####               ####              #####                ####             ####          ",
-    "                                                                                                ",
     "                M                   M                   M                   M                   ",
     "             ###                 ###                 ###                 ###                    ",
     "                                                                                                ",
@@ -140,7 +129,6 @@ const LEVELS: Tile[][][] = [
     "                                                                                                            ",
     "                M           M           M           M           M           M           M           M       ",
     "             ###         ####        ####        ####        ####        ####        ####        ####      ",
-    "                                                                                                            ",
     "        M                   M                   M                   M                   M           M       ",
     "     ####                ####                ####                ####                ####        ####       ",
     "                                                                                                            ",
@@ -148,9 +136,8 @@ const LEVELS: Tile[][][] = [
     "                                                                                                          H ",
     "  SS   S   SS   S   SS   S   SS   S   SS   S   SS   S   SS   S   SS   S   SS   S   SS   S   SS   S   ##### ",
     "  SSS  SS  SSS  SS  SSS  SS  SSS  SS  SSS  SS  SSS  SS  SSS  SS  SSS  SS  SSS  SS  SSS  SS  SSS  SS  ##### ",
-    "############################################################################################################",
+    "................................................................................................############",
   ]),
-  // L7 — staircase to the sky
   makeLevel([
     "                                                                          M                 ",
     "                                                                       ####                 ",
@@ -158,14 +145,13 @@ const LEVELS: Tile[][][] = [
     "                                                               ####                         ",
     "                          M                              M                                  ",
     "                       ####                           ####                                  ",
-    "             M                              M                                               ",
+    "             M   ##                      M    ###                                           ",
     "          ####                           ####                                              H",
     "    M                                                                                     ##",
-    " ####    S    ####    SS    ####    S    ####    SS    ####    S    ####    SS    ####  ###",
+    " ####    S    ####    SS    ####    ####    SS    ####    S    ####    SS    ####  ###",
     "###############     ###################      #######################      ##################",
     "############################################################################################",
   ]),
-  // L8 — long gaps + magnet bait
   makeLevel([
     "                                                                                                          ",
     "                M                M                M                M                M                M    ",
@@ -180,7 +166,6 @@ const LEVELS: Tile[][][] = [
     "####  SS  ####  SS  ####  SS  ####  SS  ####  SS  ####  SS  ####  SS  ####  SS  ####  SS  ####  SS  ####",
     "##########################################################################################################",
   ]),
-  // L9 — vertical climb with spike forest below
   makeLevel([
     "                                                                                                              ",
     "                                                                                                M             ",
@@ -195,7 +180,6 @@ const LEVELS: Tile[][][] = [
     "  SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS   SS  ###",
     "##############################################################################################################",
   ]),
-  // L10 — gauntlet finale
   makeLevel([
     "                                                                                                                        ",
     "                M           M           M           M           M           M           M           M           M       ",
@@ -212,9 +196,9 @@ const LEVELS: Tile[][][] = [
   ]),
 ];
 
+
 const TOTAL_LEVELS = LEVELS.length;
 
-// Endless procedural
 function generateEndlessChunk(seed: number, length: number): Tile[][] {
   const LH = 12;
   const rows: Tile[][] = Array.from({ length: LH }, () => Array(length).fill(" ") as Tile[]);
@@ -246,7 +230,6 @@ function generateEndlessChunk(seed: number, length: number): Tile[][] {
   return rows;
 }
 
-// ---------- Road / world map ----------
 const ROAD_P0 = { x: 16, y: VH - 22 };
 const ROAD_P1 = { x: VW * 0.5, y: 30 };
 const ROAD_P2 = { x: VW - 30, y: 60 };
@@ -257,10 +240,8 @@ function roadPos(t: number) {
     y: u * u * ROAD_P0.y + 2 * u * t * ROAD_P1.y + t * t * ROAD_P2.y,
   };
 }
-
-// ---------- Cozy Earth ----------
 const COZY_W = 256;
-const COZY_H = VH;
+const COZY_H = 144;
 const COZY_COLORS = [
   { key: "red", col: "#ff5868" },
   { key: "blue", col: "#5890ff" },
@@ -274,19 +255,18 @@ interface CozyScroll { x: number; y: number; key: string; col: string; taken: bo
 function buildCozy() {
   const houses: CozyHouse[] = [];
   const positions = [
-    { x: 40, y: 34 }, { x: 200, y: 34 }, { x: 40, y: 150 }, { x: 200, y: 150 },
+    { x: 40, y: 30 }, { x: 200, y: 30 }, { x: 40, y: 110 }, { x: 200, y: 110 },
   ];
   const shuffled = [...COZY_COLORS].sort(() => Math.random() - 0.5);
   for (let i = 0; i < 4; i++) houses.push({ ...positions[i], ...shuffled[i] });
   const scrolls: CozyScroll[] = COZY_COLORS.map((c) => ({
     x: 60 + Math.random() * (COZY_W - 120),
-    y: 56 + Math.random() * (COZY_H - 112),
+    y: 50 + Math.random() * (COZY_H - 80),
     key: c.key, col: c.col, taken: false, delivered: false, bob: Math.random() * Math.PI * 2,
   }));
   return { houses, scrolls };
 }
 
-// ---------- Game ----------
 type Scene =
   | "intro"
   | "falling"
@@ -327,7 +307,7 @@ export default function VoidCourier() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scene, setScene] = useState<Scene>("intro");
-  const [showSign, setShowSign] = useState(false);
+  const [introPhase, setIntroPhase] = useState(0);
   const [mode, setMode] = useState<Mode>("story");
   const [levelIdx, setLevelIdx] = useState(0);
   const [collected, setCollected] = useState(0);
@@ -337,32 +317,31 @@ export default function VoidCourier() {
   const [endlessBest, setEndlessBest] = useState(0);
   const [lastReward, setLastReward] = useState<Powerup | null>(null);
 
-  const INTRO_SLIDES = [
-    "LONG AGO, EARTH'S MAIL SHIP TORE OPEN OVER THE VOID...",
-    "EVERY LETTER, EVERY PARCEL, EVERY LOST KEEPSAKE SPILLED INTO THE DARK.",
-    "YOU ARE THE LAST COURIER LEFT STANDING.",
-    "GATHER WHAT THE VOID STOLE.  CARRY IT HOME.",
+  const STORY_SLIDES = [
+    { title: "THE VOID", lines: ["Before time was tidy, things could slip.", "A forgotten name. A letter never sent.", "A future nobody chose.", "They all fell — through the cracks", "between what was and what remained.", "They fell into THE VOID."] },
+    { title: "THE VOID IS FULL", lines: ["The Void was never meant to be a place.", "But places grow wherever enough things", "are lost together.", "Civilizations. Clocks. Carousel horses.", "And mail. So much undelivered mail.", "It piles up. It drifts. It waits."] },
+    { title: "YOU", lines: ["You are Elias Ward, courier.", "You slipped — between one delivery", "and the next — and now you're here.", "The Curator found you.", '"Deliver the lost mail," it said.', '"Every parcel is a step back home."'] },
   ];
+
+  const INTRO_SLIDES = ["LONG AGO, EARTH'S MAIL SHIP TORE OPEN OVER THE VOID...", "EVERY LETTER, EVERY PARCEL, EVERY LOST KEEPSAKE SPILLED INTO THE DARK.", "YOU ARE THE LAST COURIER LEFT STANDING.", "GATHER WHAT THE VOID STOLE.  CARRY IT HOME."];
   const [introSlide, setIntroSlide] = useState(0);
   const [introTyped, setIntroTyped] = useState(0);
 
-  // Typewriter ticker effect
-  useEffect(() => {
-    if (scene !== "intro") return;
-    const interval = setInterval(() => {
-      setIntroTyped((prev) => {
-        if (prev < INTRO_SLIDES[introSlide].length) return prev + 1;
-        clearInterval(interval);
-        return prev;
-      });
-    }, 40);
-    return () => clearInterval(interval);
-  }, [scene, introSlide]);
-
   const sceneRef = useRef<Scene>("intro"); sceneRef.current = scene;
+  const introPhaseRef = useRef(0); introPhaseRef.current = introPhase;
   const levelRef = useRef(0); levelRef.current = levelIdx;
   const modeRef = useRef<Mode>("story"); modeRef.current = mode;
   const powerupsRef = useRef<Powerup[]>([]); powerupsRef.current = activePowerups;
+
+  const collectedRef = useRef(0);
+  const totalMailRef = useRef(0);
+  const scoreRef = useRef(0);
+  const bestRef = useRef(0);
+
+  useEffect(() => { collectedRef.current = collected; }, [collected]);
+  useEffect(() => { totalMailRef.current = totalMail; }, [totalMail]);
+  useEffect(() => { scoreRef.current = endlessScore; }, [endlessScore]);
+  useEffect(() => { bestRef.current = endlessBest; }, [endlessBest]);
 
   const playerRef = useRef<Player>({ x: 32, y: 0, vx: 0, vy: 0, onGround: false, facing: 1, runFrame: 0, jumpsLeft: 1 });
   const mailsRef = useRef<Mail[]>([]);
@@ -444,11 +423,13 @@ export default function VoidCourier() {
   useEffect(() => {
     const c = canvasRef.current!;
     const fit = () => {
-      const aw = Math.max(64, window.innerWidth - FRAME_PADDING);
-      const ah = Math.max(64, window.innerHeight - FRAME_PADDING);
-      const scale = Math.min(aw / VW, ah / VH);
-      c.style.width = `${Math.floor(VW * scale)}px`;
-      c.style.height = `${Math.floor(VH * scale)}px`;
+      const aw = window.innerWidth;
+      const ah = window.innerHeight;
+      const scaleX = aw / VW;
+      const scaleY = ah / VH;
+      const scale = Math.min(scaleX, scaleY);
+      c.style.width = `${VW * scale}px`;
+      c.style.height = `${VH * scale}px`;
     };
     fit();
     window.addEventListener("resize", fit);
@@ -468,28 +449,12 @@ export default function VoidCourier() {
 
   const consumeShield = (): boolean => {
     if (powerupsRef.current.includes("shield")) {
-      setActivePowerups((p) => p.filter((x) => x !== "shield"));
+      setActivePowerups((p: Powerup[]) => p.filter((x: Powerup) => x !== "shield"));
       return true;
     }
     return false;
   };
 
-  // FIXED: Implementation of missing renderBriefing function
-  const renderBriefing = (ctx: CanvasRenderingContext2D, t: number) => {
-    ctx.fillStyle = "rgba(10,6,18,0.9)";
-    ctx.fillRect(0, 0, VW, VH);
-    drawCourier(ctx, VW / 2 - 8, VH / 2 + 10, 1, false, 1.2);
-    ctx.fillStyle = C.signFace;
-    ctx.fillRect(24, VH / 2 - 44, VW - 48, 44);
-    ctx.strokeStyle = C.outline;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(24, VH / 2 - 44, VW - 48, 44);
-    drawTextPixel(ctx, "BRIEFING FROM HEADQUARTERS:", VW / 2, VH / 2 - 38, C.houseRoof, true, 1);
-    drawTextPixel(ctx, "SECURE THE SATCHEL. AVOID VOID.", VW / 2, VH / 2 - 26, C.signText, true, 1);
-    drawTextPixel(ctx, "PRESS SPACE TO START JOURNEY", VW / 2, VH / 2 - 12, C.crt, true, 1);
-  };
-
-  // Main loop
   useEffect(() => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
@@ -502,8 +467,9 @@ export default function VoidCourier() {
       tickRef.current++;
       const t = tickRef.current;
       const s = sceneRef.current;
+      ctx.fillStyle = C.void;
+      ctx.fillRect(0, 0, VW, VH);
 
-      // ===== UPDATE =====
       if (s === "falling") {
         fallYRef.current += 0.6;
         if (fallYRef.current > VH / 2 - 8) fallYRef.current = VH / 2 - 8;
@@ -520,22 +486,22 @@ export default function VoidCourier() {
         if (k["arrowleft"] || k["a"]) { ax = -1; p.facing = -1; }
         if (k["arrowright"] || k["d"]) { ax = 1; p.facing = 1; }
         const speedMult = pu.includes("speed") ? 1.5 : 1;
-        p.vx = ax * 1.4 * speedMult;
+        p.vx = ax * 2.4 * speedMult;
         if (ax !== 0) p.runFrame += 0.2;
 
         const jumpPressed = (k["arrowup"] || k["w"] || k[" "]) && !jumpHeldRef.current;
         if (jumpPressed) {
           jumpHeldRef.current = true;
           const maxJumps = pu.includes("doubleJump") ? 2 : 1;
-          if (p.onGround) { p.vy = -4.2; p.onGround = false; p.jumpsLeft = maxJumps - 1; }
-          else if (p.jumpsLeft > 0) { p.vy = -3.8; p.jumpsLeft--; }
+          if (p.onGround) { p.vy = -5.2; p.onGround = false; p.jumpsLeft = maxJumps - 1; }
+          else if (p.jumpsLeft > 0) { p.vy = -4.6; p.jumpsLeft--; }
         }
 
         p.vy += 0.22;
         if (p.vy > 6) p.vy = 6;
 
         p.x += p.vx;
-        const pw = 8, ph = 14;
+        const pw = 16, ph = 28;
         if (p.vx > 0) {
           if (solidAt(lvl, p.x + pw, p.y) || solidAt(lvl, p.x + pw, p.y + ph - 1))
             p.x = Math.floor((p.x + pw) / TS) * TS - pw - 0.01;
@@ -585,7 +551,8 @@ export default function VoidCourier() {
           }
           if (p.x + pw > m.x && p.x < m.x + 8 && p.y + ph > m.y && p.y < m.y + 6) {
             m.collected = true;
-            setCollected((n) => n + 1);
+            collectedRef.current += 1;
+            setCollected(collectedRef.current);
           }
         }
 
@@ -606,8 +573,8 @@ export default function VoidCourier() {
               if (lvl[r][c] !== "H") continue;
               const hx = c * TS - 8, hy = r * TS - 4;
               if (p.x + pw > hx && p.x < hx + 24 && p.y + ph > hy && p.y < hy + 24) {
-                const needed = Math.ceil(totalMail * MAIL_QUOTA);
-                setScene(collected >= needed ? "levelComplete" : "levelFailed");
+                const needed = Math.ceil(totalMailRef.current * MAIL_QUOTA);
+                setScene(collectedRef.current >= needed ? "levelComplete" : "levelFailed");
               }
             }
           }
@@ -615,7 +582,10 @@ export default function VoidCourier() {
 
         if (modeRef.current === "endless") {
           endlessDistRef.current = Math.max(endlessDistRef.current, p.x);
-          setEndlessScore(Math.floor(endlessDistRef.current / 8) + collected * 10);
+          const nextScore = Math.floor(endlessDistRef.current / 8) + collectedRef.current * 10;
+          scoreRef.current = nextScore;
+          setEndlessScore(nextScore);
+
           if (p.x > lvl[0].length * TS - 80) {
             const newChunk = generateEndlessChunk(Date.now() & 0xffff, 200);
             const offset = lvl[0].length;
@@ -633,10 +603,10 @@ export default function VoidCourier() {
         if (!dead && p.x + pw < voidEdgeRef.current) {
           if (consumeShield()) voidEdgeRef.current = p.x - 30; else dead = true;
         }
-        if (!dead && p.y > VH + 40) dead = true;
+        if (!dead && p.y > VH + 8) dead = true;
         if (dead) {
           if (modeRef.current === "endless") {
-            setEndlessBest((b) => Math.max(b, endlessScore));
+            setEndlessBest((b) => Math.max(b, scoreRef.current));
             setScene("endlessDead");
           } else setScene("dead");
         }
@@ -646,56 +616,57 @@ export default function VoidCourier() {
         updateCozy();
       }
 
-      // ===== RENDER =====
       if (s === "earthCozy" || s === "earthCozyDone") {
         renderCozy(ctx, t);
       } else {
         ctx.fillStyle = C.void;
         ctx.fillRect(0, 0, VW, VH);
+        
         if (bgReady && bgImg) {
           const bw = Math.max(1, Math.ceil(bgImg.width * (VH / bgImg.height)));
           const scrollX = (s === "playing" || s === "dead" || s === "levelComplete" || s === "levelFailed" || s === "endlessDead")
             ? cameraRef.current * 0.45
             : t * 0.15;
           const offset = ((scrollX % bw) + bw) % bw;
-          for (let bx = -offset; bx < VW; bx += bw) {
+          for (let bx = -offset; bx < VW + bw; bx += bw) {
             ctx.drawImage(bgImg, Math.floor(bx), 0, bw, VH);
           }
         }
+
         for (const st of starsRef.current) {
           ctx.fillStyle = (t + st.x) % 80 < 40 ? C.star : "#9a8acc";
           ctx.fillRect(st.x, st.y, st.s, st.s);
         }
-        ctx.fillStyle = C.voidGlow;
-        ctx.fillRect(0, VH - 14, VW, 14);
-      }
 
-      if (s === "intro") {
-        // Render background only; Text layer handles typing overlay
-      } else if (s === "falling") {
-        drawTextPixel(ctx, "VOID COURIER", VW / 2, 18, C.crt, true, 1);
-        drawTextPixel(ctx, "delivery #" + Math.floor((t / 4) % 9999), VW / 2, 30, C.hudFg, true, 1);
-        const py = fallYRef.current;
-        drawCourier(ctx, VW / 2 - 12, py, 1, true, 1.6);
-        for (let i = 0; i < 8; i++) {
-          const ly = (t * 4 + i * 24) % VH;
-          ctx.fillStyle = C.voidEdge;
-          ctx.fillRect(VW / 2 + Math.sin(i) * 30, ly, 1, 6);
+        if (s === "falling") {
+          const py = fallYRef.current;
+          ctx.save();
+          ctx.imageSmoothingEnabled = false;
+          const scale = 2.5;
+          const cw = 16 * scale, ch = 20 * scale;
+          ctx.translate(Math.floor(VW / 2 - cw / 2), Math.floor(py - ch / 2));
+          ctx.scale(scale, scale);
+          drawCourier(ctx, 0, 0, 1, true);
+          ctx.restore();
+
+          const bx = VW / 2 - 14, by = VH - 60;
+          ctx.fillStyle = C.sign; ctx.fillRect(VW / 2 - 1, by + 18, 2, 8);
+          ctx.fillStyle = C.outline; ctx.fillRect(bx - 1, by - 1, 30, 20);
+          ctx.fillStyle = C.sign;    ctx.fillRect(bx,     by,     28, 18);
+          ctx.fillStyle = C.signFace; ctx.fillRect(bx + 2, by + 2, 24, 14);
+          ctx.fillStyle = C.signText;
+          for (let i = 0; i < 5; i++) {
+            ctx.fillRect(bx + 8 + i, by + 4 + i, 1, 10 - i * 2);
+            ctx.fillRect(bx + 19 - i, by + 4 + i, 1, 10 - i * 2);
+          }
+          ctx.fillRect(bx + 13, by + 9, 2, 2);
+          if (Math.floor(t / 20) % 2 === 0) drawTextPixel(ctx, "PRESS I", VW / 2, VH - 8, C.mail, true, 1);
         }
-        if (py > VH / 2 - 12) {
-          drawSign(ctx, VW / 2 - 12, VH - 56);
-          drawTextPixel(ctx, "CLICK THE PLAY SIGN", VW / 2, VH - 8, C.hudFg, true, 1);
-        }
-      } else if (s === "briefing") {
-        renderBriefing(ctx, t);
-      } else if (s === "home" || s === "homeArrival" || s === "homeFinale") {
-        renderHome(ctx, t, s);
-      } else if (s === "playing" || s === "levelComplete" || s === "levelFailed" || s === "dead" || s === "endlessDead") {
-        renderPlay(ctx, t, s);
-      } else if (s === "minigame") {
-        renderMinigame(ctx, t);
-      } else if (s === "minigameResult") {
-        renderMinigameResult(ctx);
+
+        if (s === "playing" || s === "dead" || s === "levelComplete" || s === "levelFailed" || s === "endlessDead") renderPlay(ctx, t, s);
+        if (s === "home" || s === "homeArrival" || s === "homeFinale") renderHome(ctx, t, s);
+        if (s === "minigame") renderMinigame(ctx, t);
+        if (s === "minigameResult") renderMinigameResult(ctx);
       }
 
       raf = requestAnimationFrame(loop);
@@ -704,7 +675,6 @@ export default function VoidCourier() {
     return () => cancelAnimationFrame(raf);
   }, [collected, totalMail, lastReward, endlessScore, endlessBest, bgReady]);
 
-  // ---------- Render: Play ----------
   const renderPlay = (ctx: CanvasRenderingContext2D, t: number, s: Scene) => {
     const lvl = getLvl();
     const cam = Math.floor(cameraRef.current);
@@ -714,7 +684,7 @@ export default function VoidCourier() {
       for (let c = startCol; c < endCol; c++) {
         const tile = lvl[r][c];
         const x = c * TS - cam;
-        const y = r * TS;
+        const y = r * TS - 32; 
         if (tile === "#") {
           ctx.fillStyle = C.outline; ctx.fillRect(x, y, TS, TS);
           ctx.fillStyle = C.brick; ctx.fillRect(x + 1, y + 1, TS - 2, TS - 3);
@@ -736,18 +706,18 @@ export default function VoidCourier() {
       const off = Math.sin(m.bob) * 1;
       ctx.fillStyle = C.mail;
       ctx.globalAlpha = 0.4;
-      ctx.fillRect(mx - 2, m.y + off + 1, 12, 6);
+      ctx.fillRect(mx - 2, m.y + off - 31, 12, 6); 
       ctx.globalAlpha = 1;
-      drawMail(ctx, mx, m.y + off);
+      drawMail(ctx, mx, m.y + off - 32);
     }
 
     const p = playerRef.current;
-    drawCourier(ctx, Math.floor(p.x - cam) - 4, Math.floor(p.y) - 4, p.facing, !p.onGround);
+    drawCourier(ctx, Math.floor(p.x - cam) - 4, Math.floor(p.y) - 36, p.facing, !p.onGround);
 
     if (powerupsRef.current.includes("shield")) {
       ctx.strokeStyle = C.shield; ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(Math.floor(p.x - cam) + 4, Math.floor(p.y) + 7, 10 + Math.sin(t * 0.2), 0, Math.PI * 2);
+      ctx.arc(Math.floor(p.x - cam) + 4, Math.floor(p.y) - 25, 10 + Math.sin(t * 0.2), 0, Math.PI * 2);
       ctx.stroke();
     }
 
@@ -774,31 +744,31 @@ export default function VoidCourier() {
 
     ctx.fillStyle = "rgba(10,6,18,0.85)";
     ctx.fillRect(0, 0, VW, 14);
-    const needed = Math.ceil(totalMail * MAIL_QUOTA);
+    const needed = Math.ceil(totalMailRef.current * MAIL_QUOTA);
     if (modeRef.current === "story") {
       drawTextPixel(ctx, `LV ${levelRef.current + 1}/${TOTAL_LEVELS}`, 4, 4, C.hudFg, false, 1);
-      drawTextPixel(ctx, `MAIL ${collected}/${totalMail}  NEED ${needed}`, VW / 2, 4, collected >= needed ? C.crt : C.mail, true, 1);
+      drawTextPixel(ctx, `MAIL ${collectedRef.current}/${totalMailRef.current}  NEED ${needed}`, VW / 2, 4, collectedRef.current >= needed ? C.crt : C.mail, true, 1);
     } else {
       drawTextPixel(ctx, `DIST ${Math.floor(endlessDistRef.current / 8)}`, 4, 4, C.hudFg, false, 1);
-      drawTextPixel(ctx, `SCORE ${endlessScore}  BEST ${Math.max(endlessBest, endlessScore)}`, VW / 2, 4, C.crt, true, 1);
+      drawTextPixel(ctx, `SCORE ${scoreRef.current}  BEST ${Math.max(bestRef.current, scoreRef.current)}`, VW / 2, 4, C.crt, true, 1);
     }
     let px = VW - 4;
     for (const pu of powerupsRef.current) {
       px -= 10;
-      ctx.fillStyle = POWERUP_COLORS[pu]; ctx.fillRect(px, 4, 8, 6);
+      ctx.fillStyle = POWERUP_COLORS[pu as Powerup]; ctx.fillRect(px, 4, 8, 6);
       ctx.fillStyle = C.outline; ctx.fillRect(px, 4, 8, 1); ctx.fillRect(px, 9, 8, 1);
     }
 
     if (s === "levelComplete") {
       ctx.fillStyle = "rgba(10,6,18,0.85)"; ctx.fillRect(0, 0, VW, VH);
       drawTextPixel(ctx, "DELIVERED!", VW / 2, VH / 2 - 28, C.crt, true, 2);
-      drawTextPixel(ctx, `${collected} / ${totalMail} MAIL`, VW / 2, VH / 2 - 8, C.hudFg, true, 1);
+      drawTextPixel(ctx, `${collectedRef.current} / ${totalMailRef.current} MAIL`, VW / 2, VH / 2 - 8, C.hudFg, true, 1);
       drawTextPixel(ctx, levelRef.current === TOTAL_LEVELS - 1 ? "SPACE  REACH EARTH" : "SPACE  MINI-GAME", VW / 2, VH / 2 + 10, C.mail, true, 1);
     }
     if (s === "levelFailed") {
       ctx.fillStyle = "rgba(40,6,18,0.85)"; ctx.fillRect(0, 0, VW, VH);
       drawTextPixel(ctx, "DELIVERY REJECTED", VW / 2, VH / 2 - 28, C.mailStamp, true, 2);
-      drawTextPixel(ctx, `ONLY ${collected} OF ${needed} NEEDED`, VW / 2, VH / 2 - 8, C.hudFg, true, 1);
+      drawTextPixel(ctx, `ONLY ${collectedRef.current} OF ${needed} NEEDED`, VW / 2, VH / 2 - 8, C.hudFg, true, 1);
       drawTextPixel(ctx, "PRESS R TO RETRY LEVEL", VW / 2, VH / 2 + 10, C.mail, true, 1);
     }
     if (s === "dead") {
@@ -809,8 +779,8 @@ export default function VoidCourier() {
     if (s === "endlessDead") {
       ctx.fillStyle = "rgba(10,6,18,0.85)"; ctx.fillRect(0, 0, VW, VH);
       drawTextPixel(ctx, "ENDLESS OVER", VW / 2, VH / 2 - 30, C.mailStamp, true, 2);
-      drawTextPixel(ctx, `SCORE ${endlessScore}`, VW / 2, VH / 2 - 8, C.crt, true, 1);
-      drawTextPixel(ctx, `BEST  ${Math.max(endlessBest, endlessScore)}`, VW / 2, VH / 2 + 4, C.hudFg, true, 1);
+      drawTextPixel(ctx, `SCORE ${scoreRef.current}`, VW / 2, VH / 2 - 8, C.crt, true, 1);
+      drawTextPixel(ctx, `BEST  ${Math.max(bestRef.current, scoreRef.current)}`, VW / 2, VH / 2 + 4, C.hudFg, true, 1);
       drawTextPixel(ctx, "R RETRY    M HOME", VW / 2, VH / 2 + 22, C.mail, true, 1);
     }
   };
@@ -837,27 +807,27 @@ export default function VoidCourier() {
     drawCourier(ctx, Math.round(sp.x) - 8, Math.round(sp.y) - 18 + bob, 1, false);
 
     ctx.fillStyle = "rgba(10,6,18,0.85)";
-    ctx.fillRect(0, VH - 26, VW, 26);
+    ctx.fillRect(0, VH - 34, VW, 34);
 
     if (s === "home") {
-      drawTextPixel(ctx, `STAGE ${levelIdx + 1} OF ${TOTAL_LEVELS}`, VW / 2, VH - 22, C.mail, true, 1);
-      drawTextPixel(ctx, "SPACE  START STAGE", VW / 2, VH - 12, C.hudFg, true, 1);
-      drawTextPixel(ctx, "E  ENDLESS MODE", VW / 2, VH - 4, C.shield, true, 1);
+      drawTextPixel(ctx, `STAGE ${levelIdx + 1} OF ${TOTAL_LEVELS}`, VW / 2, VH - 30, C.mail, true, 1);
+      drawTextPixel(ctx, "SPACE  START STAGE", VW / 2, VH - 20, C.hudFg, true, 1);
+      drawTextPixel(ctx, "E  ENDLESS MODE", VW / 2, VH - 10, C.shield, true, 1);
     } else if (s === "homeArrival") {
-      drawTextPixel(ctx, "JOURNEY HOME...", VW / 2, VH - 14, C.crt, true, 1);
+      drawTextPixel(ctx, "JOURNEY HOME...", VW / 2, VH - 18, C.crt, true, 1);
     } else if (s === "homeFinale") {
       drawNPC(ctx, Math.round(earth.x) - 22, Math.round(earth.y) - 4, t);
       ctx.fillStyle = C.signFace;
-      ctx.fillRect(20, VH - 56, VW - 40, 30);
+      ctx.fillRect(20, VH - 64, VW - 40, 30);
       ctx.fillStyle = C.outline;
-      ctx.fillRect(20, VH - 56, VW - 40, 1);
-      ctx.fillRect(20, VH - 27, VW - 40, 1);
-      ctx.fillRect(20, VH - 56, 1, 30);
-      ctx.fillRect(VW - 21, VH - 56, 1, 30);
-      drawTextPixel(ctx, "WELCOME HOME, COURIER.", VW / 2, VH - 52, C.signText, true, 1);
-      drawTextPixel(ctx, "EVERY LOST THING IS DELIVERED.", VW / 2, VH - 42, C.signText, true, 1);
-      drawTextPixel(ctx, "SPACE  EXPLORE EARTH", VW / 2, VH - 20, C.crt, true, 1);
-      drawTextPixel(ctx, "E ENDLESS    R RESTART", VW / 2, VH - 8, C.mail, true, 1);
+      ctx.fillRect(20, VH - 64, VW - 40, 1);
+      ctx.fillRect(20, VH - 35, VW - 40, 1);
+      ctx.fillRect(20, VH - 64, 1, 30);
+      ctx.fillRect(VW - 21, VH - 64, 1, 30);
+      drawTextPixel(ctx, "WELCOME HOME, COURIER.", VW / 2, VH - 60, C.signText, true, 1);
+      drawTextPixel(ctx, "EVERY LOST THING IS DELIVERED.", VW / 2, VH - 50, C.signText, true, 1);
+      drawTextPixel(ctx, "SPACE  EXPLORE EARTH", VW / 2, VH - 24, C.crt, true, 1);
+      drawTextPixel(ctx, "E ENDLESS    R RESTART", VW / 2, VH - 12, C.mail, true, 1);
     }
   };
 
@@ -888,7 +858,7 @@ export default function VoidCourier() {
         }
       }
     }
-    if (c.scrolls.every((s) => s.delivered)) setScene("earthCozyDone");
+    if (c.scrolls.every((s: CozyScroll) => s.delivered)) setScene("earthCozyDone");
   };
 
   const renderCozy = (ctx: CanvasRenderingContext2D, t: number) => {
@@ -919,7 +889,7 @@ export default function VoidCourier() {
     ctx.fillStyle = "rgba(10,30,18,0.85)";
     ctx.fillRect(0, 0, COZY_W, 14);
     drawTextPixel(ctx, "EARTH  COZY DELIVERY", COZY_W / 2, 4, C.crt, true, 1);
-    const left = c.scrolls.filter((s) => !s.delivered).length;
+    const left = c.scrolls.filter((s: CozyScroll) => !s.delivered).length;
     drawTextPixel(ctx, `${4 - left}/4`, 4, 4, C.hudFg, false, 1);
     drawTextPixel(ctx, "ARROWS  WANDER", COZY_W - 4, 4, C.hudFg, false, 1, "right");
 
@@ -987,7 +957,7 @@ export default function VoidCourier() {
       reward = pool[Math.floor(Math.random() * pool.length)];
     }
     setLastReward(reward);
-    if (reward) setActivePowerups((p) => Array.from(new Set([...p, reward!])));
+    if (reward) setActivePowerups((p: Powerup[]) => Array.from(new Set([...p, reward!])));
     setScene("minigameResult");
   };
 
@@ -1044,30 +1014,33 @@ export default function VoidCourier() {
   const renderMinigameResult = (ctx: CanvasRenderingContext2D) => {
     drawTextPixel(ctx, "POWERUP EARNED", VW / 2, 30, C.crt, true, 2);
     if (lastReward) {
-      ctx.fillStyle = POWERUP_COLORS[lastReward];
+      ctx.fillStyle = POWERUP_COLORS[lastReward as Powerup];
       ctx.fillRect(VW / 2 - 16, 56, 32, 20);
       ctx.fillStyle = C.outline;
       ctx.fillRect(VW / 2 - 16, 56, 32, 1); ctx.fillRect(VW / 2 - 16, 75, 32, 1);
       ctx.fillRect(VW / 2 - 16, 56, 1, 20); ctx.fillRect(VW / 2 + 15, 56, 1, 20);
-      drawTextPixel(ctx, POWERUP_NAMES[lastReward], VW / 2, 86, C.hudFg, true, 1);
+      drawTextPixel(ctx, POWERUP_NAMES[lastReward as Powerup], VW / 2, 86, C.hudFg, true, 1);
     } else {
       drawTextPixel(ctx, "NOTHING THIS TIME", VW / 2, 66, C.hudFg, true, 1);
     }
     drawTextPixel(ctx, "PRESS SPACE TO CONTINUE", VW / 2, VH - 14, C.mail, true, 1);
   };
 
-  const handleCanvasClick = (e: React.MouseEvent) => {
-    if (scene !== "falling") return;
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * VW;
-    const y = ((e.clientY - rect.top) / rect.height) * VH;
-    if (x > VW / 2 - 14 && x < VW / 2 + 14 && y > VH - 58 && y < VH - 32) setShowSign(true);
-  };
+  const handleCanvasClick = (_e: React.MouseEvent) => {};
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
-      // FIXED: Added handling to progress from intro and briefing scenes via keyboard spacebar
+      
+      if (k === "i" && (sceneRef.current === "falling" || sceneRef.current === "intro")) {
+        setIntroPhase(p => p === 0 ? 1 : 0);
+        return;
+      }
+      if (k === "escape") {
+        setIntroPhase(0);
+        return;
+      }
+
       if (scene === "intro") {
         if (k === " " || k === "enter") {
           if (introSlide < INTRO_SLIDES.length - 1) {
@@ -1076,10 +1049,6 @@ export default function VoidCourier() {
           } else {
             setScene("falling");
           }
-        }
-      } else if (scene === "briefing") {
-        if (k === " ") {
-          setScene("home");
         }
       } else if (scene === "home") {
         if (k === " ") {
@@ -1127,81 +1096,208 @@ export default function VoidCourier() {
   }, [scene, levelIdx, mode, loadStoryLevel, loadEndlessLevel, startMinigame, introSlide, INTRO_SLIDES.length]);
 
   const startGame = () => {
-    setShowSign(false);
-    // CHANGED: Progress to the briefing scene instead of immediately jumping to the world map
-    setScene("briefing");
+    setIntroPhase(0);
+    setLevelIdx(0);
+    setActivePowerups([]);
+    setScene("home");
   };
 
   return (
-    <div ref={containerRef} className="relative flex h-dvh w-screen items-center justify-center overflow-hidden bg-[#03020a] p-3">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(ellipse at center, rgba(90,40,160,0.25), transparent 60%)" }}
-      />
-      <div className="relative max-h-full max-w-full overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          onClick={handleCanvasClick}
-          className="block cursor-pointer"
-          style={{ imageRendering: "pixelated" }}
-        />
-        <div className="crt-overlay" />
-        <div className="crt-vignette" />
+    <div ref={containerRef} style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", overflow: "hidden", background: "#03020a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ pointerEvents: "none", position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, rgba(90,40,160,0.25), transparent 60%)" }} />
+
+      <div style={{ position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}>
+        <canvas ref={canvasRef} style={{ display: "block", imageRendering: "pixelated", cursor: "pointer" }} />
+        <div className="crt-overlay" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
+        <div className="crt-vignette" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
       </div>
 
-      {/* FIXED: Added missing typewriter backstory presentation layers for the intro screen */}
-      {scene === "intro" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 px-6 font-mono text-xs text-[#a8ff80]">
-          <div className="max-w-md space-y-4 tracking-wider leading-relaxed">
-            <p>
-              {INTRO_SLIDES[introSlide].substring(0, introTyped)}
-              {introTyped < INTRO_SLIDES[introSlide].length && <span className="animate-pulse">_</span>}
-            </p>
-            {introTyped >= INTRO_SLIDES[introSlide].length && (
-              <div className="pt-6 text-center text-[#fff4ff] opacity-60 text-[10px] animate-bounce">
-                PRESS SPACEBAR TO CONTINUE
-              </div>
-            )}
-          </div>
-        </div>
+      {scene === "falling" && introPhase === 0 && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 30, cursor: "pointer" }} onClick={() => setIntroPhase(1)} />
       )}
 
-      {showSign && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 px-4 py-4 overflow-auto">
-          <div className="max-w-md border-4 border-[#8a5a2a] bg-[#f0d8a0] p-5 text-[10px] leading-relaxed text-[#2a1a08] shadow-[8px_8px_0_#0a0612]">
-            <div className="mb-3 text-center text-[14px] text-[#5a2818]">— NOTICE TO COURIER —</div>
-            <p className="mb-2 text-[#5a2818]">YOU HAVE FALLEN INTO <b>THE VOID</b>.</p>
-            <p className="mb-2">
-              Gather lost parcels and carry them to the house at the edge of each stage —
-              every delivery walks you closer along the road back to <b>EARTH</b>.
-            </p>
-            <p className="mb-2"><b>QUOTA:</b> deliver at least <b>70%</b> of mail or redo the stage.</p>
-            <p className="mb-2"><b>BETWEEN STAGES:</b> postal mini-game grants a random powerup.</p>
-            <p className="mb-2"><b>10 STAGES</b> stand between you and Earth.</p>
-            <p className="mb-2">
-              MOVE <b>ARROWS / A D</b> &nbsp; JUMP <b>SPACE / W</b> &nbsp; RETRY <b>R</b>
-            </p>
-            <div className="flex justify-center">
-              <button
-                onClick={startGame}
-                className="border-2 border-[#2a1a08] bg-[#5a2818] px-4 py-2 text-[10px] text-[#f8f0d8] shadow-[3px_3px_0_#2a1a08] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#2a1a08]"
-              >
-                BEGIN
-              </button>
-            </div>
-          </div>
-        </div>
+      {introPhase > 0 && (
+        <IntroOverlay
+          phase={introPhase}
+          setPhase={setIntroPhase}
+          storySlides={STORY_SLIDES}
+          onStart={startGame}
+          npcColors={{ cloak: C.npcCloak, beard: C.npcBeard, outline: C.outline, mail: C.mail, crt: C.crt }}
+        />
       )}
+
+      <DevPanel
+        currentScene={scene}
+        setScene={setScene}
+        levelIdx={levelIdx}
+        setLevelIdx={setLevelIdx}
+        setActivePowerups={setActivePowerups}
+        setCollected={setCollected}
+        setTotalMail={setTotalMail}
+      />
     </div>
   );
 }
 
-// ---------- Courier sprite ----------
+interface SlideData { title: string; lines: string[]; }
+interface NpcColors { cloak: string; beard: string; outline: string; mail: string; crt: string; }
+
+function TypewriterLine({ text, speed = 26, onDone }: { text: string; speed?: number; onDone?: () => void }) {
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    setShown(0);
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      setShown(i);
+      if (i >= text.length) { clearInterval(id); onDone?.(); }
+    }, speed);
+    return () => clearInterval(id);
+  }, [text]);
+  return <>{text.slice(0, shown)}{shown < text.length && <span style={{ opacity: 0.7 }}>▌</span>}</>;
+}
+
+function IntroOverlay({ phase, setPhase, storySlides, onStart, npcColors }: {
+  phase: number; setPhase: (n: number) => void;
+  storySlides: SlideData[]; onStart: () => void;
+  npcColors: NpcColors;
+}) {
+  const isStory = phase >= 1 && phase <= 3;
+  const slide = isStory ? storySlides[phase - 1] : null;
+
+  const [lineIdx, setLineIdx] = useState(0);
+  const [allDone, setAllDone] = useState(false);
+  useEffect(() => { setLineIdx(0); setAllDone(false); }, [phase]);
+
+  const advance = () => {
+    if (!allDone) { setLineIdx(slide ? slide.lines.length : 0); setAllDone(true); return; }
+    if (phase < 3) setPhase(phase + 1);
+    else if (phase === 3) setPhase(4);
+    else onStart();
+  };
+
+  const accent = phase === 1 ? "#5028a0" : phase === 2 ? "#c060a0" : phase === 3 ? "#a8ff80" : "#a8ff80";
+
+  /* CHANGED: Custom 8-bit repeating line block shader pattern */
+  const stripe = (color: string) => (
+    <div style={{ height: "8px", background: `repeating-linear-gradient(90deg, ${color} 0px, ${color} 4px, #000 4px, #000 8px)`, borderBottom: "3px solid #000" }} />
+  );
+
+  /* CHANGED: Replaced standard continuous styles with hard pixel borders and layered offsets */
+  const btn = (label: string, onClick: () => void) => (
+    <button onClick={onClick} style={{
+      display: "block", width: "100%", padding: "10px 0",
+      fontFamily: '"Press Start 2P", monospace', fontSize: "8px", fontWeight: "bold", letterSpacing: "0.1em",
+      color: "#000", background: accent, border: "4px solid #000",
+      cursor: "pointer", boxShadow: "4px 4px 0px #000", transform: "translate(-2px, -2px)",
+      imageRendering: "pixelated"
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.2)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.filter = ""; }}
+      onMouseDown={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(2px, 2px)"; b.style.boxShadow = "none"; }}
+      onMouseUp={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = "translate(-2px, -2px)"; b.style.boxShadow = "4px 4px 0px #000"; }}
+    >{label}</button>
+  );
+
+  if (isStory && slide) {
+    return (
+      <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(3,2,10,0.92)", fontFamily: '"Press Start 2P", monospace' }}
+        onClick={advance}>
+        <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px)" }} />
+        <div style={{ position: "relative", width: "100%", maxWidth: "360px", margin: "0 16px" }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: "absolute", top: "6px", left: "6px", right: "-6px", bottom: "-6px", background: "#000" }} />
+          <div style={{ position: "relative", background: "#0c0a1c", border: "4px solid #000" }}>
+            {stripe(accent)}
+            <div style={{ padding: "20px" }}>
+              <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "16px" }}>
+                {[1,2,3].map(i => (
+                  <div key={i} style={{ width: "8px", height: "8px", background: i === phase ? accent : "#140e28", border: "2px solid #000" }} />
+                ))}
+              </div>
+              <div style={{ fontSize: "10px", fontWeight: "bold", color: accent, letterSpacing: "0.1em", textAlign: "center", marginBottom: "14px" }}>
+                {slide.title}
+              </div>
+              <div style={{ minHeight: "110px", fontSize: "7px", color: "#c8b8f0", lineHeight: "2.2", letterSpacing: "0.05em" }}>
+                {slide.lines.slice(0, lineIdx).map((l, i) => <div key={i} style={{ marginBottom: "4px" }}>{l}</div>)}
+                {lineIdx < slide.lines.length && (
+                  <div style={{ color: "#fff4ff" }}>
+                    <TypewriterLine
+                      text={slide.lines[lineIdx]}
+                      onDone={() => {
+                        if (lineIdx + 1 < slide.lines.length) setTimeout(() => setLineIdx(i => i + 1), 350);
+                        else setTimeout(() => setAllDone(true), 400);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <div style={{ marginTop: "16px" }}>
+                {btn(allDone ? (phase < 3 ? "NEXT >" : "CONTINUE >") : "SKIP >>", advance)}
+              </div>
+            </div>
+            {stripe(accent)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "24px", background: "rgba(3,2,10,0.85)", fontFamily: '"Press Start 2P", monospace' }}>
+      <div style={{ pointerEvents: "none", position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px)" }} />
+
+      <div style={{ position: "absolute", bottom: "28px", left: "calc(50% - 190px)", zIndex: 2, width: "48px" }}>
+        <div style={{ position: "relative", width: "32px", margin: "0 auto" }}>
+          <div style={{ position: "absolute", top: "-16px", left: "4px", width: "24px", height: "18px", background: npcColors.cloak, border: "2px solid #000" }} />
+          <div style={{ position: "absolute", top: "-10px", left: "8px", width: "16px", height: "10px", background: "#e8c89a", border: "2px solid #000" }} />
+          <div style={{ position: "absolute", top: "-7px", left: "10px", width: "2px", height: "2px", background: "#000" }} />
+          <div style={{ position: "absolute", top: "-7px", left: "20px", width: "2px", height: "2px", background: "#000" }} />
+          <div style={{ position: "absolute", top: "-2px", left: "8px", width: "16px", height: "5px", background: npcColors.beard }} />
+          <div style={{ width: "32px", height: "38px", background: npcColors.cloak, border: "2px solid #000" }} />
+          <div style={{ position: "absolute", top: "-20px", right: "-5px", width: "4px", height: "58px", background: "#6a4010", border: "2px solid #000" }} />
+          <div style={{ position: "absolute", top: "-22px", right: "-7px", width: "8px", height: "4px", background: npcColors.mail, border: "2px solid #000" }} />
+        </div>
+      </div>
+
+      <div style={{ position: "relative", zIndex: 3, width: "100%", maxWidth: "340px", margin: "0 16px" }}>
+        <div style={{ position: "absolute", bottom: "20px", left: "-12px", width: 0, height: 0, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderRight: "12px solid #000" }} />
+        <div style={{ position: "absolute", top: "6px", left: "6px", right: "-6px", bottom: "-6px", background: "#000" }} />
+        <div style={{ position: "relative", background: "#08140c", border: "4px solid #000" }}>
+          {stripe(npcColors.crt)}
+          <div style={{ padding: "14px" }}>
+            <div style={{ fontSize: "8px", color: npcColors.crt, fontWeight: "bold", letterSpacing: "0.05em", marginBottom: "8px" }}>
+              THE CURATOR <span style={{ color: "#4a8a5a", fontWeight: "normal" }}>- KEEPER</span>
+            </div>
+            <div style={{ fontSize: "7px", color: "#d8f8d8", lineHeight: "2.1", marginBottom: "10px", minHeight: "44px" }}>
+              <TypewriterLine text={`Ah. Another one who slipped through. Don't worry — I've catalogued worse. Deliver the lost mail. Every parcel is a step back home.`} speed={20} />
+            </div>
+            <div style={{ border: "3px solid #000", background: "#040a04", padding: "8px", marginBottom: "12px", fontSize: "6px", color: "#a8d8a8", lineHeight: "2" }}>
+              <div style={{ color: npcColors.crt, fontWeight: "bold", marginBottom: "4px", borderBottom: "2px solid #142810", paddingBottom: "2px" }}>YOUR MISSION</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px", marginBottom: "8px" }}>
+                <div> COLLECT LOST MAIL</div><div> REACH THE HOUSE</div>
+                <div> REACH Quota: 70%</div><div> 10 STAGES LEFT</div>
+              </div>
+              <div style={{ color: npcColors.crt, fontWeight: "bold", marginBottom: "4px", borderBottom: "2px solid #142810", paddingBottom: "2px" }}>CONTROLS</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px" }}>
+                <div><span style={{ color: npcColors.mail }}>A D / LEFT RIGHT</span></div>
+                <div><span style={{ color: npcColors.mail }}>W / SPACE</span> JUMP</div>
+                <div><span style={{ color: npcColors.mail }}>R</span> RETRY</div>
+                <div><span style={{ color: npcColors.mail }}>M</span> MAP SUMMARY</div>
+              </div>
+            </div>
+            {btn("[ BEGIN DELIVERY ]", onStart)}
+          </div>
+          {stripe(npcColors.crt)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const courierImg: HTMLImageElement | null = typeof Image !== "undefined" ? new Image() : null;
 let courierReady = false;
 if (courierImg) {
   courierImg.onload = () => { courierReady = true; };
-  // FIXED: Changed courierAsset.url to direct courierAsset
   courierImg.src = courierAsset;
 }
 
@@ -1209,32 +1305,33 @@ const bgImg: HTMLImageElement | null = typeof Image !== "undefined" ? new Image(
 let bgReady = false;
 if (bgImg) {
   bgImg.onload = () => { bgReady = true; };
-  // FIXED: Changed bgAsset.url to direct bgAsset
   bgImg.src = bgAsset;
 }
 
-function drawCourier(ctx: CanvasRenderingContext2D, x: number, y: number, facing: 1 | -1, airborne: boolean, scale = 1) {
+function drawCourier(ctx: CanvasRenderingContext2D, x: number, y: number, facing: 1 | -1, airborne: boolean, scale = 2) {
   const baseW = 16, baseH = 20;
   const W = Math.round(baseW * scale);
   const H = Math.round(baseH * scale);
-  ctx.fillStyle = C.outline;
-  ctx.fillRect(x - 1, y, W + 2, H);
-  ctx.fillRect(x, y - 1, W, H + 2);
+  
   if (!courierReady || !courierImg) {
-    ctx.fillStyle = "#5a3a8a"; ctx.fillRect(x, y, W, H); return;
+    ctx.fillStyle = C.outline;
+    ctx.fillRect(x, y, W, H); 
+    return;
   }
+  
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   const dy = airborne ? -1 : 0;
+  
   if (facing === -1) {
-    ctx.translate(x + W, y + dy); ctx.scale(-1, 1);
+    ctx.translate(x + W, y + dy); 
+    ctx.scale(-1, 1);
     ctx.drawImage(courierImg, 0, 0, W, H);
   } else {
     ctx.drawImage(courierImg, x, y + dy, W, H);
   }
   ctx.restore();
 }
-
 
 function drawMail(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.fillStyle = C.outline; ctx.fillRect(x - 1, y - 1, 10, 8);

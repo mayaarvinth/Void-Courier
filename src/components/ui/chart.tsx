@@ -102,6 +102,8 @@ const ChartTooltipContent = React.forwardRef<
       nameKey?: string;
       labelKey?: string;
       label?: React.ReactNode;
+      // payload is provided by Recharts when rendering custom tooltip content
+      payload?: any[];
       labelFormatter?: (value: any, payload: any[]) => React.ReactNode;
       labelClassName?: string;
       formatter?: (value: any, name: any, item: any, index: number, payload: any) => React.ReactNode;

@@ -29,8 +29,9 @@
 }
 
 @layer base {
-  html, body, #root, [data-status] {
-    height: 100svh; /* Locks wrapper height to strict dynamic viewport space */
+  html, body {
+    height: 100vh;
+    height: 100svh;
     width: 100vw;
     margin: 0;
     padding: 0;
@@ -40,18 +41,40 @@
     image-rendering: pixelated;
     -webkit-font-smoothing: none;
     overflow: hidden;
-    position: relative;
+  }
+
+  /* * FIXED: Forces TanStack Router nested wrapper divisions to take up full 
+   * block space instead of collapsing into narrow columns due to flex constraints.
+   */
+  #root, [data-status], #root > div, [data-status] > div {
     display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
     align-items: center;
     justify-content: center;
   }
+  
+  .game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #03020a;
+    overflow: hidden;
+  }
+
   canvas {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     display: block;
     max-height: 100%;
     max-width: 100%;
+    object-fit: contain;
   }
+
   button {
     font-family: var(--font-pixel);
   }
